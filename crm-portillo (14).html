@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>CRM · Portillo Sur</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.3/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ac:#ff4d2e;--a:#ff4d2e;--b:#f5a623;--gn:#27c281;--bl:#37a7ff;--pu:#a78bfa}
+[data-theme="dark"]{--bg:#0b0d12;--card:#151920;--c2:#1c2230;--ln:#252e3d;--tx:#eef1f6;--mu:#6b7585;--inp:#0b0d12;--sh:0 4px 24px rgba(0,0,0,.55);--sb:#111520}
+[data-theme="light"]{--bg:#f0f3fa;--card:#fff;--c2:#f4f7fe;--ln:#dde3ef;--tx:#1a1e2e;--mu:#8a95ab;--inp:#fff;--sh:0 4px 24px rgba(0,0,0,.08);--sb:#f8faff}
+body{background:var(--bg);color:var(--tx);font-family:'Barlow',sans-serif;min-height:100vh;transition:background .2s,color .2s}
+h1,h2,h3,.num,.tab,.badge,.chip,.btn,.fab,.save,.snl{font-family:'Barlow Semi Condensed',sans-serif!important}
+/* Layout */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:210px;flex-shrink:0;background:var(--sb);border-right:1px solid var(--ln);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{flex:1;min-width:0;overflow-y:auto;height:100vh}
+.inner{padding:24px 26px 80px;max-width:1140px}
+@media(max-width:900px){.sidebar{width:170px}.inner{padding:18px 16px 80px}}
+@media(max-width:660px){.sidebar{display:none}.main{height:auto}.bnav{display:flex!important}.inner{padding:14px 12px 76px}}
+/* Sidebar */
+.slogo{padding:20px 16px 10px;display:flex;align-items:center;gap:10px}
+.slt{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.slt span{color:var(--ac)}
+.snav{padding:5px 8px}
+.sni{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:10px;cursor:pointer;margin-bottom:2px;transition:background .15s}
+.sni:hover{background:var(--c2)}
+.sni.on{background:rgba(255,77,46,.13);color:var(--ac)}
+.sni.on .sni-ico{color:var(--ac)}
+.sni-ico{font-size:16px;width:20px;text-align:center;color:var(--mu)}
+.snl{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.snb{margin-left:auto;background:var(--ac);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'Barlow Semi Condensed',sans-serif}
+.sdiv{height:1px;background:var(--ln);margin:7px 9px}
+.sbot{margin-top:auto;padding:11px 9px}
+/* Bottom nav mobile */
+.bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--ln);z-index:20;height:56px}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--mu);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;position:relative}
+.bni.on{color:var(--ac)}
+.bni-ico{font-size:17px}
+/* Page */
+.pghd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.pghd h2{font-size:21px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.pghd h2 span{color:var(--ac)}
+.hdacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--ln);border-radius:13px;padding:14px 8px;text-align:center;border-top:3px solid transparent}
+.stat.red{border-top-color:var(--a)}.stat.grn{border-top-color:var(--gn)}.stat.blu{border-top-color:var(--bl)}.stat.org{border-top-color:var(--b)}
+.num{font-size:29px;font-weight:700;line-height:1}
+.stat.red .num{color:var(--a)}.stat.grn .num{color:var(--gn)}.stat.blu .num{color:var(--bl)}.stat.org .num{color:var(--b)}
+.lbl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-top:5px}
+/* Leads layout */
+.ll{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:1000px){.ll{grid-template-columns:1fr 460px;gap:16px;align-items:start}}
+.llist{display:flex;flex-direction:column;gap:7px}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--ln);border-radius:13px;overflow:hidden;border-left:4px solid transparent;transition:box-shadow .2s;cursor:pointer}
+.card:hover{box-shadow:var(--sh)}
+.card.sel{border-left-color:var(--ac)!important;box-shadow:var(--sh)}
+.ctop{display:flex;align-items:flex-start;gap:10px;padding:11px 13px}
+.nm{font-weight:700;font-size:15px}.veh{color:var(--mu);font-size:12px;margin-top:2px}
+.bgs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.badge{font-size:9px;font-weight:700;padding:3px 7px;border-radius:6px;text-transform:uppercase;letter-spacing:.3px}
+.tagm{font-size:9px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--c2);color:var(--mu);border:1px solid var(--ln)}
+.rt{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.sfn{font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(255,77,46,.16);color:var(--a);border:1px solid var(--a)}
+.sfs{font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;background:rgba(39,194,129,.14);color:var(--gn);border:1px solid var(--gn)}
+/* Detail panel */
+.dp{background:var(--card);border:1px solid var(--ln);border-radius:15px;padding:18px;position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto}
+@media(max-width:999px){.dp{display:none}}
+.dp.mob{display:block;position:fixed;inset:0;z-index:40;border-radius:0;overflow-y:auto;padding:18px 15px 40px}
+.dphd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.dpcl{background:none;border:none;color:var(--mu);font-size:17px;cursor:pointer;padding:4px}
+.dpl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:7px}
+.ia-box{background:rgba(55,167,255,.08);border:1px solid rgba(55,167,255,.22);border-radius:10px;padding:11px;margin-bottom:9px}
+.ia-lbl{font-size:9.5px;color:var(--bl);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:5px}
+.ia-txt{font-size:12.5px;line-height:1.5;color:var(--tx)}
+.wa-box{background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.22);border-radius:10px;padding:11px;margin-bottom:9px}
+.wa-lbl{font-size:9.5px;color:#25d366;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:5px}
+.ni{padding:7px 0 7px 10px;border-left:2px solid var(--ac);margin-bottom:7px}
+.nif{font-size:10px;color:var(--mu);margin-bottom:2px}.nit{font-size:12.5px;line-height:1.4}
+.nis{font-size:11px;color:var(--bl);margin-top:3px;padding:4px 7px;background:rgba(55,167,255,.07);border-radius:6px}
+.ti{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--c2);border-radius:8px;margin-bottom:6px}
+.tchk{width:18px;height:18px;border-radius:5px;border:2px solid var(--ln);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.tchk.done{background:var(--gn);border-color:var(--gn);color:#fff}
+.ttxt{font-size:12px;flex:1}.ttxt.done{text-decoration:line-through;color:var(--mu)}
+/* Filters */
+.fbar{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}.fbar::-webkit-scrollbar{display:none}
+.ftab{flex:0 0 auto;background:var(--card);border:1px solid var(--ln);color:var(--mu);padding:7px 12px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+.ftab.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.frow{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.sinp{flex:1;min-width:160px;background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:8px 12px;color:var(--tx);font-size:13.5px;font-family:'Barlow',sans-serif}
+.sinp:focus{outline:none;border-color:var(--ac)}
+.sel{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:8px 12px;color:var(--tx);font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer}
+.sel:focus{outline:none;border-color:var(--ac)}
+/* Calendar */
+.calhd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.calnav{background:var(--card);border:1px solid var(--ln);color:var(--mu);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.caltit{font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.caldow{text-align:center;font-size:9.5px;font-weight:700;color:var(--mu);text-transform:uppercase;padding:5px 0}
+.calday{min-height:66px;background:var(--card);border:1px solid var(--ln);border-radius:9px;padding:5px;cursor:pointer;transition:border-color .15s}
+.calday:hover{border-color:var(--ac)}
+.calday.today{border-color:var(--ac);background:rgba(255,77,46,.06)}
+.calday.sel{border-color:var(--ac);background:rgba(255,77,46,.12)}
+.calday.empty{background:transparent;border-color:transparent;cursor:default}
+.caldd{font-size:11px;font-weight:700;margin-bottom:3px}
+.calday.today .caldd{color:var(--ac)}
+.caldots{display:flex;flex-wrap:wrap;gap:2px}
+.caldo{width:7px;height:7px;border-radius:50%}
+@media(max-width:660px){.calday{min-height:46px}.caldo{width:5px;height:5px}}
+/* Reports */
+.repgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:680px){.repgrid{grid-template-columns:1fr}}
+.repc{background:var(--card);border:1px solid var(--ln);border-radius:13px;padding:16px}
+.reptit{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mu);margin-bottom:12px}
+.barrow{margin-bottom:7px}
+.barlbl{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px}
+.bartr{height:6px;background:var(--ln);border-radius:4px;overflow:hidden}
+.barfil{height:100%;border-radius:4px;transition:width .4s}
+.funrow{display:flex;align-items:center;gap:9px;margin-bottom:7px;padding:7px 11px;background:var(--c2);border-radius:8px}
+.funlbl{font-size:12px;flex:1}
+.funnum{font-size:15px;font-weight:700;font-family:'Barlow Semi Condensed',sans-serif}
+.funpct{font-size:10.5px;color:var(--mu);margin-left:3px}
+.msel{background:var(--inp);border:1px solid var(--ln);border-radius:8px;padding:7px 11px;color:var(--tx);font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer}
+.msel:focus{outline:none;border-color:var(--ac)}
+/* Post-sale */
+.psc{background:var(--card);border:1px solid var(--ln);border-radius:13px;padding:15px;margin-bottom:9px;border-left:4px solid var(--gn)}
+.psnm{font-size:15px;font-weight:700}.psveh{font-size:12px;color:var(--mu);margin-top:2px}
+.psmeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.pspill{font-size:11px;padding:3px 9px;border-radius:7px;background:var(--c2);color:var(--mu);border:1px solid var(--ln)}
+.pssg{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;margin-top:6px;font-size:12px}
+.pssg.due{background:rgba(255,77,46,.1);color:var(--a);border:1px solid rgba(255,77,46,.3)}
+.pssg.ok{background:rgba(39,194,129,.1);color:var(--gn);border:1px solid rgba(39,194,129,.3)}
+.pssg.nxt{background:rgba(55,167,255,.1);color:var(--bl);border:1px solid rgba(55,167,255,.3)}
+.pssg.bday{background:rgba(167,139,250,.1);color:var(--pu);border:1px solid rgba(167,139,250,.3)}
+/* Tasks */
+.taskc{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:13px;margin-bottom:7px;display:flex;gap:11px;align-items:flex-start}
+.tck{width:21px;height:21px;border-radius:6px;border:2px solid var(--ln);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:1px;transition:all .15s}
+.tck.done{background:var(--gn);border-color:var(--gn);color:#fff}
+.tck.due{border-color:var(--ac)}
+.tkb{flex:1}
+.tknm{font-size:13.5px;font-weight:600}.tknm.done{text-decoration:line-through;color:var(--mu)}
+.tkld{font-size:11.5px;color:var(--mu);margin-top:2px}
+.tkwh{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-top:4px}
+.tkq{font-size:11.5px;color:var(--bl);margin-top:5px;padding:5px 8px;background:rgba(55,167,255,.07);border-radius:7px;border:1px solid rgba(55,167,255,.18)}
+/* VPP */
+.vpp-box{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.25);border-radius:11px;padding:13px;margin-top:8px}
+.vpp-lbl{font-size:10px;color:var(--pu);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:10px}
+.vpp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.vpp-grid{grid-template-columns:1fr}}
+/* Alert bar */
+.alertbar{background:rgba(255,77,46,.1);border:1px solid rgba(255,77,46,.28);border-radius:11px;padding:11px 15px;margin-bottom:12px;display:flex;align-items:center;gap:9px;cursor:pointer}
+.abtxt{flex:1;font-size:13px;font-weight:600}
+.abnum{background:var(--ac);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap}
+/* Buttons */
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:5px;justify-content:center;text-decoration:none;flex:1;transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn.acc{background:var(--ac);color:#fff}.btn.grn{background:var(--gn);color:#06351c}.btn.blu{background:var(--bl);color:#04223a}
+.btn.wa{background:#25d366;color:#06351c}.btn.gh{background:transparent;border:1px solid var(--ln);color:var(--mu)}
+.btn.sm{padding:6px 10px;font-size:11px}
+.fab{position:fixed;bottom:68px;right:20px;background:var(--ac);color:#fff;border:none;width:52px;height:52px;border-radius:50%;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(255,77,46,.4);cursor:pointer;z-index:19}
+@media(min-width:661px){.fab{bottom:22px;right:26px}}
+/* Modals */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.sheet{background:var(--card);width:100%;max-width:580px;border-radius:20px 20px 0 0;padding:20px 16px 32px;max-height:92vh;overflow-y:auto;animation:up .25s}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:660px){.ov{align-items:center}.sheet{border-radius:17px;max-height:88vh}}
+.sheet h2{font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.fld{margin-bottom:11px}.fld>label{display:block;font-size:10.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-weight:700}
+.inp{width:100%;background:var(--inp);border:1px solid var(--ln);border-radius:10px;padding:10px;color:var(--tx);font-size:14px;font-family:'Barlow',sans-serif;transition:border-color .2s}
+.inp:focus{outline:none;border-color:var(--ac)}
+textarea.inp{resize:vertical;min-height:68px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--inp);border:1px solid var(--ln);color:var(--mu);padding:7px 11px;border-radius:10px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.chip.pc.on{background:var(--bl);border-color:var(--bl);color:#04223a}
+.chip.cv.on{background:var(--b);border-color:var(--b);color:#0d0f14}
+.chip.ng.on{background:#ff8c42;border-color:#ff8c42;color:#fff}
+.chip.won.on{background:var(--gn);border-color:var(--gn);color:#06351c}
+.chip.lst.on{background:var(--a);border-color:var(--a);color:#fff}
+.chip.vt.on{background:var(--pu);border-color:var(--pu);color:#fff}
+.save{width:100%;background:var(--ac);color:#fff;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;margin-top:7px}
+.cancel{width:100%;background:transparent;color:var(--mu);border:none;padding:11px;font-size:13.5px;cursor:pointer;margin-top:3px}
+.divider{height:1px;background:var(--ln);margin:12px 0}
+.sect{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:7px}
+/* SF alert */
+.sfalert{background:rgba(0,192,232,.08);border:2px solid rgba(0,192,232,.35);border-radius:14px;padding:20px;text-align:center}
+.sfaico{font-size:34px;margin-bottom:8px}
+.sfat{font-size:16px;font-weight:700;margin-bottom:5px}
+.sfad{font-size:13px;color:var(--mu);margin-bottom:14px;line-height:1.5}
+/* Setup */
+.setup{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.secard{background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:24px;width:100%;max-width:500px}
+.secard h2{color:var(--ac);margin-bottom:6px}
+.stepbox{background:var(--c2);border:1px solid var(--ln);border-radius:12px;padding:13px;margin-bottom:11px}
+.stepn{font-size:10.5px;color:var(--ac);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.hint{font-size:11.5px;color:var(--mu);line-height:1.5;margin-top:6px}
+.errbox{font-size:12px;color:var(--a);margin-top:7px;padding:8px 11px;background:rgba(255,77,46,.1);border-radius:8px}
+/* Misc */
+.empty{text-align:center;color:var(--mu);padding:46px 20px;font-size:14px}.empty .big{font-size:36px;margin-bottom:9px}
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--c2);border:1px solid var(--ac);color:var(--tx);padding:10px 17px;border-radius:28px;font-size:13px;font-weight:600;z-index:99;box-shadow:var(--sh);white-space:nowrap;pointer-events:none}
+.icobtn{background:var(--card);border:1px solid var(--ln);color:var(--mu);padding:7px 10px;border-radius:9px;font-size:13px;cursor:pointer}
+.icobtn:hover{border-color:var(--ac)}
+.impbtn{background:rgba(55,167,255,.1);border:1px solid rgba(55,167,255,.28);color:var(--bl);padding:7px 12px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;text-transform:uppercase}
+.reset{background:none;border:none;color:var(--mu);font-size:11px;cursor:pointer;text-decoration:underline}
+.motbox{margin-top:7px;padding:7px 10px;background:rgba(255,77,46,.08);border-radius:8px;font-size:12.5px;color:var(--a)}
+</style>
+</head>
+<body>
+<div id="loading" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:999;gap:16px">
+  <div style="font-size:48px;animation:bounce .8s infinite alternate">🚗</div>
+  <div style="font-family:'Barlow Semi Condensed',sans-serif;font-size:15px;color:var(--mu);text-transform:uppercase;letter-spacing:.8px">Cargando CRM...</div>
+</div>
+<div id="err" style="display:none;position:fixed;inset:0;background:var(--bg);padding:30px;overflow:auto;z-index:999">
+  <div style="font-size:20px;font-weight:700;color:#ff4d2e;margin-bottom:12px">Error al cargar</div>
+  <pre id="errmsg" style="background:#1a0a0a;border:1px solid rgba(255,77,46,.3);padding:16px;border-radius:10px;font-size:12px;color:#ff9980;white-space:pre-wrap;word-break:break-all;line-height:1.5"></pre>
+  <div style="margin-top:12px;font-size:13px;color:#6b7585;line-height:1.6">Abre la consola (F12 → Console) para ver el detalle del error.</div>
+  <button onclick="location.reload()" style="margin-top:12px;background:#ff4d2e;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:14px;cursor:pointer">Reintentar</button>
+</div>
+<style>@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-12px)}}</style>
+<script>
+window.onerror=function(m,s,l,c,e){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('err').style.display='block';
+  document.getElementById('errmsg').textContent=(e?e.stack||e.message:m)+' ['+s+':'+l+':'+c+']';
+  return true;
+};
+window.addEventListener('unhandledrejection',function(e){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('err').style.display='block';
+  document.getElementById('errmsg').textContent=String(e.reason&&e.reason.stack||e.reason||'Promise rejected');
+});
+</script>
+
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useMemo,useRef}=React;
+
+/* ─── Constants ───────────────────────────────────────── */
+const ESTADOS={nuevo:{lbl:'Nuevo',c:'var(--mu)',bg:'rgba(126,135,153,.18)'},primer_contacto:{lbl:'1er Contacto',c:'var(--bl)',bg:'rgba(55,167,255,.16)'},conversacion:{lbl:'Conversacion',c:'var(--b)',bg:'rgba(245,166,35,.16)'},negociacion:{lbl:'Negociacion',c:'#ff8c42',bg:'rgba(255,140,66,.16)'},no_contesta:{lbl:'No Contesta',c:'#e06bff',bg:'rgba(224,107,255,.15)'},close_won:{lbl:'Close Won',c:'var(--gn)',bg:'rgba(39,194,129,.16)'},close_lost:{lbl:'Close Lost',c:'var(--a)',bg:'rgba(255,77,46,.13)'}};
+const ORIGENES={facebook:{lbl:'Facebook',c:'#4e9df0'},referido:{lbl:'Referido',c:'var(--gn)'},salesforce:{lbl:'Salesforce',c:'#00c0e8'},asignado:{lbl:'Asignado',c:'var(--b)'}};
+const MOTIVOS=['Datos malos','Ya compro','No aprueba credito','No interesado','No responde'];
+const CREDITOS=[{v:'aprobado',lbl:'Aprobado',c:'var(--gn)'},{v:'contado',lbl:'Contado',c:'var(--bl)'},{v:'pendiente',lbl:'Pendiente',c:'var(--b)'},{v:'no_aprobado',lbl:'No aprobado',c:'var(--a)'}];
+const TIPO_VENTA=[{v:'contado',lbl:'Contado'},{v:'convencional',lbl:'Credito Convencional'},{v:'inteligente',lbl:'Credito Inteligente'}];
+const REGIONES=['La Araucania','Biobio','Nuble','Los Rios','Los Lagos','Metropolitana','Valparaiso','OHiggins','Maule','Antofagasta','Coquimbo','Atacama','Tarapaca','Arica y Parinacota','Magallanes','Aysen'];
+const COMUNAS_DEFAULT=['Temuco','Padre Las Casas','Vilcun','Freire','Cunco','Perquenco','Lautaro','Nueva Imperial','Carahue','Victoria','Angol','Concepcion','Santiago','Valparaiso','Puerto Montt','Osorno','Valdivia','Rancagua','Talca'];
+const DEFAULT_CFG={marcas:['Mahindra','SWM','Shineray','JIM','JAC'],modelos:[{n:'XUV3XO',m:'Mahindra'},{n:'Scorpio',m:'Mahindra'},{n:'Pik Up',m:'Mahindra'},{n:'Bolero',m:'Mahindra'},{n:'XUV700',m:'Mahindra'},{n:'G03F',m:'SWM'},{n:'G05 Pro',m:'SWM'},{n:'T30 Mini Truck',m:'Shineray'},{n:'X30',m:'Shineray'},{n:'RE-MAX',m:'JIM'},{n:'T52 CD',m:'JIM'},{n:'T8',m:'JAC'},{n:'Sei 7',m:'JAC'}],versiones:[{n:'MT Comfort',mo:'XUV3XO'},{n:'AT Deluxe',mo:'XUV3XO'},{n:'MT Luxury',mo:'XUV3XO'},{n:'CS 1.6 5MT ELT',mo:'T30 Mini Truck'},{n:'CD 1.6 5MT STD',mo:'T52 CD'},{n:'4X4 MT STD',mo:'RE-MAX'},{n:'4X4 MT DLX',mo:'RE-MAX'},{n:'1.5 MT Comfort',mo:'G03F'},{n:'Pro 2.0 Elite',mo:'G05 Pro'}],comunas:[...COMUNAS_DEFAULT]};
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const TIPOS_EV=[
+  {v:'llamada',lbl:'Llamada',ico:'📞',c:'#37a7ff'},
+  {v:'reunion',lbl:'Reunion',ico:'🤝',c:'#27c281'},
+  {v:'otro',lbl:'Otro evento',ico:'📋',c:'#f5a623'},
+];
+const DIAS=['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+const VACIO={nombre:'',rut:'',telefono:'',correo:'',marca:'',modelo:'',version:'',origen:'',credito:'',cat:'',enSF:false,region:'',comuna:'',vppTiene:false,vppMarca:'',vppModelo:'',vppAnio:'',vppKm:'',vppDuenos:'1',vppLlaves:'2',vppMant:''};
+
+/* ─── Utils ─────────────────────────────────────────── */
+const hoy=()=>new Date().toISOString().slice(0,10);
+const addD=(iso,d)=>{const dt=new Date(iso+'T00:00:00');dt.setDate(dt.getDate()+d);return dt.toISOString().slice(0,10);};
+const dif=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);
+const fmt=iso=>{if(!iso)return'';const[y,m,d]=iso.split('-');return d+'/'+m+'/'+y;};
+const fmtM=iso=>{if(!iso)return'';const[y,m]=iso.split('-');return MESES[parseInt(m)-1]+' '+y;};
+const waUrl=(tel,msg)=>{let t=(tel||'').replace(/\D/g,'');if(!t)return null;if(t.length===9&&t[0]==='9')t='56'+t;else if(t.length===8)t='569'+t;return'https://wa.me/'+t+(msg?'?text='+encodeURIComponent(msg):'');};
+const cp=txt=>{try{navigator.clipboard.writeText(txt);}catch(e){const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');}catch(_){}document.body.removeChild(a);}};
+const dmarca=veh=>{const v=(veh||'').toUpperCase();if(v.includes('XUV')||v.includes('SCORPIO')||v.includes('PIK UP')||v.includes('BOLERO'))return'Mahindra';if(v.includes('G03')||v.includes('G05')||v.includes('G01'))return'SWM';if(v.includes('T30')||v.includes('T32')||v.includes('X30'))return'Shineray';if(v.includes('RE-MAX')||v.includes('T52')||v.includes('T60'))return'JIM';if(v.includes('JAC')||v.includes('T8')||v.includes('SEI'))return'JAC';return'';};
+const parseFC=raw=>{let s=raw.trim();s=s.replace(/^(?:const|let|var)\s+\w+\s*=\s*/,'').replace(/;?\s*$/,'').trim();try{return JSON.parse(s);}catch(e){}const j=s.replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3');return JSON.parse(j);};
+const getFups=(fe,nom,veh)=>[{tipo:'30d',fecha:addD(fe,30),msg:'Hola '+nom+'! Como va todo con tu '+veh+'? Espero que lo estes disfrutando mucho 🚗'},{tipo:'6m',fecha:addD(fe,180),msg:'Hola '+nom+'! Ya van 6 meses con tu '+veh+'. Todo bien? Cualquier consulta aqui estoy 🙌'},{tipo:'1y',fecha:addD(fe,365),msg:'Hola '+nom+'! Un ano con tu '+veh+' 🎉 Espero que lo sigas disfrutando. Saludos de Portillo Sur!'}];
+const getBday=(bd,nom,veh)=>{if(!bd)return null;const[,m,d]=bd.split('-');const f=hoy().slice(0,4)+'-'+m+'-'+d;return{tipo:'bday',fecha:f,msg:'Hola '+nom+'! Feliz cumpleanos desde Portillo Sur 🎂 Que pases un excelente dia! Saludos!'};};
+
+/* ─── Firebase ──────────────────────────────────────── */
+const fload=async db=>{const s=await db.collection('leads').get();return s.docs.map(d=>({id:d.id,...d.data()}));};
+const fsave=async(db,l)=>{const{id,...d}=l;await db.collection('leads').doc(id).set(d);};
+const fdel=async(db,id)=>{await db.collection('leads').doc(id).delete();};
+const cfload=async db=>{const d=await db.collection('settings').doc('config').get();return d.exists?d.data():null;};
+const cfsave=async(db,c)=>{await db.collection('settings').doc('config').set(c);};
+const fbatch=async(db,ls)=>{for(let i=0;i<ls.length;i+=499){const b=db.batch();ls.slice(i,i+499).forEach(l=>{const{id,...d}=l;b.set(db.collection('leads').doc(id),d);});await b.commit();}};
+
+/* ─── AI ────────────────────────────────────────────── */
+const callAI=async(lead,nota,key)=>{
+  if(!key)throw new Error('Sin API key');
+  const hist=(lead.notas||[]).slice(-4).map(n=>'['+n.fecha+']: '+n.texto).join(' | ');
+  const veh=[lead.marca,lead.modelo,lead.version].filter(Boolean).join(' ');
+  const est=ESTADOS[lead.estado]?ESTADOS[lead.estado].lbl:lead.estado;
+  const p=['Eres asistente de ventas de autos en Chile para Portillo Sur Temuco.','Analiza la nota y responde SOLO JSON valido sin markdown.','Formato: {"diasProximo":2,"sugerenciaLlamada":"que decirle","mensajeWA":"mensaje whatsapp listo","resumen":"situacion breve","tareas":[{"descripcion":"tarea","pregunta":"confirmacion con nombre","dias":1}]}','','Lead: '+(lead.nombre||'sin nombre'),'Vehiculo: '+(veh||'no esp.'),'Estado: '+est,'Credito: '+(lead.credito||'no esp.'),'Nota: '+nota,hist?'Historial: '+hist:''].filter(Boolean).join('\n');
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:{temperature:0.3,maxOutputTokens:600}})});
+  const data=await r.json();
+  if(data.error)throw new Error(data.error.message||'Error AI');
+  const raw=data.candidates[0].content.parts[0].text;
+  return JSON.parse(raw.replace(/```json|```/g,'').trim());
+};
+
+/* ─── CSV mapper ────────────────────────────────────── */
+const mapRow=row=>{
+  const nrm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const get=(...keys)=>{for(const k of keys){const f=Object.keys(row).find(rk=>nrm(rk).includes(nrm(k)));if(f&&row[f]&&row[f].trim())return row[f].trim();}return'';};
+  const er=get('ESTADO','estado').toUpperCase();
+  let credito='pendiente';if(er.includes('NO APROBADO'))credito='no_aprobado';else if(er.includes('CONTADO'))credito='contado';else if(er.includes('APROBADO'))credito='aprobado';
+  const c1=get('Columna 1','columna 1','etapa').toUpperCase();
+  let estado='nuevo';if(c1.includes('CONVERSACI'))estado='conversacion';else if(c1.includes('NEGOCIACI'))estado='negociacion';
+  const veh=get('vehiculo','auto','modelo','vehicle');const obs=get('observacion','obs','notas','nota','comentario');
+  const cat=(credito==='aprobado'||credito==='contado')?'B':credito==='no_aprobado'?'C':'';
+  const comuna=get('comuna');const region=get('region');
+  return{id:Date.now().toString()+Math.random().toString(36).slice(2),nombre:get('nombre oportunidad','nombre','name','cliente'),rut:get('rut'),telefono:get('numero','telefono','tel','phone'),correo:get('correo','email','mail'),marca:dmarca(veh),modelo:veh,version:'',origen:'salesforce',credito,cat,enSF:true,estado,region,comuna,vppTiene:false,vppMarca:'',vppModelo:'',vppAnio:'',vppKm:'',vppDuenos:'',vppLlaves:'',vppMant:'',notas:obs?[{id:Date.now().toString(),fecha:hoy(),texto:obs,sugerencia:null,mensajeWA:null,tareas:[]}]:[],tareasPend:[],eventos:[],noContesta:0,proximo:hoy(),sugerenciaIA:null,mensajeWAIA:null,creadoEn:hoy(),cerradoEn:null,motivoPerdida:'',postVenta:null};
+};
+
+/* ─── DDAdd ─────────────────────────────────────────── */
+function DDAdd({label,value,onChange,opciones,onAdd,disabled}){
+  const[open,setO]=useState(false);const[nv,setNv]=useState('');const ref=useRef(null);
+  useEffect(()=>{const h=e=>{if(ref.current&&!ref.current.contains(e.target))setO(false);};document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h);},[]);
+  return(<div style={{position:'relative'}} ref={ref}>
+    <div className="inp" style={{cursor:disabled?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',opacity:disabled?.5:1}} onClick={()=>!disabled&&setO(!open)}>
+      <span style={{color:value?'var(--tx)':'var(--mu)'}}>{value||'Sel. '+label}</span><span style={{color:'var(--mu)',fontSize:10}}>&#9660;</span>
+    </div>
+    {open&&(<div style={{position:'absolute',top:'calc(100% + 3px)',left:0,right:0,background:'var(--c2)',border:'1px solid var(--ln)',borderRadius:10,zIndex:200,overflow:'hidden',boxShadow:'var(--sh)'}}>
+      {value&&<div style={{padding:'8px 12px',fontSize:13,color:'var(--mu)',cursor:'pointer',borderBottom:'1px solid var(--ln)'}} onClick={()=>{onChange('');setO(false);}}>Ninguno</div>}
+      <div style={{maxHeight:155,overflowY:'auto'}}>{opciones.map(o=><div key={o} style={{padding:'9px 12px',fontSize:13.5,cursor:'pointer',background:value===o?'rgba(255,77,46,.1)':'transparent',color:value===o?'var(--ac)':'var(--tx)'}} onClick={()=>{onChange(o);setO(false);}}>{o}</div>)}</div>
+      <div style={{padding:'6px 8px',borderTop:'1px solid var(--ln)',display:'flex',gap:5}}>
+        <input value={nv} onChange={e=>setNv(e.target.value)} placeholder={'+ '+label} style={{flex:1,background:'var(--inp)',border:'1px solid var(--ln)',borderRadius:8,padding:'6px 9px',color:'var(--tx)',fontSize:12.5,fontFamily:'inherit'}} onKeyDown={e=>{if(e.key==='Enter'&&nv.trim()){onAdd(nv.trim());onChange(nv.trim());setNv('');setO(false);}}}/>
+        <button style={{background:'var(--ac)',color:'#fff',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:700,cursor:'pointer'}} onClick={()=>{if(nv.trim()){onAdd(nv.trim());onChange(nv.trim());setNv('');setO(false);}}}>+</button>
+      </div>
+    </div>)}
+  </div>);
+}
+
+/* ─── Setup ─────────────────────────────────────────── */
+function SetupScreen({onSave,saved}){
+  const[fb,setFb]=useState(saved?JSON.stringify(saved,null,2):'');
+  const[ak,setAk]=useState(localStorage.getItem('crm-ak')||'');
+  const[err,setErr]=useState('');
+  const go=()=>{
+    if(!fb.trim()){setErr('Pega tu config de Firebase.');return;}
+    try{const c=parseFC(fb);const r=['apiKey','authDomain','projectId'];if(!r.every(k=>c[k])){setErr('Faltan apiKey, authDomain o projectId.');return;}localStorage.setItem('crm-fb',JSON.stringify(c));if(ak.trim())localStorage.setItem('crm-ak',ak.trim());onSave(c,ak.trim());}
+    catch(e){setErr('No pude leer el config. Pega el bloque completo de Firebase.');}
+  };
+  return(<div className="setup"><div className="secard">
+    <h2>CRM Portillo Sur</h2>
+    <p style={{fontSize:13,color:'var(--mu)',marginBottom:18,lineHeight:1.5}}>Conecta tu base de datos para acceder desde cualquier dispositivo.</p>
+    <div className="stepbox">
+      <div className="stepn">Paso 1 — Firebase</div>
+      <p className="hint" style={{marginBottom:9}}>console.firebase.google.com → tu proyecto → ⚙️ → Tus apps → copia el bloque completo:</p>
+      <textarea className="inp" rows={6} value={fb} onChange={e=>setFb(e.target.value)} placeholder={"const firebaseConfig = {\n  apiKey: 'AIzaSy...',\n  projectId: '...',\n  ...\n};"} style={{fontFamily:'monospace',fontSize:11.5}}/>
+      <p className="hint">En Firestore → Reglas → pon: allow read, write: if true;</p>
+    </div>
+    <div className="stepbox">
+      <div className="stepn">Paso 2 — Google AI (gratis, sin tarjeta)</div>
+      <input className="inp" type="password" value={ak} onChange={e=>setAk(e.target.value)} placeholder="AIzaSy..."/>
+      <p className="hint">aistudio.google.com → Get API key. Gratis.</p>
+    </div>
+    {err&&<div className="errbox">{err}</div>}
+    <button className="save" onClick={go}>Conectar y empezar →</button>
+  </div></div>);
+}
+
+/* ─── BarChart ──────────────────────────────────────── */
+function BarChart({items,color}){
+  const mx=Math.max(...items.map(i=>i.v),1);
+  return(<div>{items.map(i=><div key={i.k} className="barrow">
+    <div className="barlbl"><span>{i.k}</span><span style={{fontWeight:700}}>{i.v}</span></div>
+    <div className="bartr"><div className="barfil" style={{width:(i.v/mx*100)+'%',background:color||'var(--ac)'}}/></div>
+  </div>)}</div>);
+}
+
+/* ─── Modal: Lead form ──────────────────────────────── */
+function ModalLead({lead,cfg,leads,onSave,onClose}){
+  const ed=!!lead&&!!lead.id;
+  const[f,setF]=useState(ed?{nombre:lead.nombre,rut:lead.rut||'',telefono:lead.telefono||'',correo:lead.correo||'',marca:lead.marca||'',modelo:lead.modelo||'',version:lead.version||'',origen:lead.origen||'',credito:lead.credito||'',cat:lead.cat||'',enSF:lead.enSF||false,region:lead.region||'',comuna:lead.comuna||'',vppTiene:lead.vppTiene||false,vppMarca:lead.vppMarca||'',vppModelo:lead.vppModelo||'',vppAnio:lead.vppAnio||'',vppKm:lead.vppKm||'',vppDuenos:lead.vppDuenos||'',vppLlaves:lead.vppLlaves||'',vppMant:lead.vppMant||''}:{...VACIO});
+  const[err,setErr]=useState('');
+  const mdM=m=>cfg.modelos.filter(x=>x.m===m).map(x=>x.n);
+  const vdM=m=>cfg.versiones.filter(x=>x.mo===m).map(x=>x.n);
+  const addM=m=>{if(!cfg.marcas.includes(m))cfg.marcas.push(m);};
+  const addMo=m=>{if(!cfg.modelos.find(x=>x.n===m&&x.m===f.marca))cfg.modelos.push({n:m,m:f.marca});};
+  const addV=v=>{if(!cfg.versiones.find(x=>x.n===v&&x.mo===f.modelo))cfg.versiones.push({n:v,mo:f.modelo});};
+  const addCom=c=>{if(!cfg.comunas)cfg.comunas=[];if(!cfg.comunas.includes(c))cfg.comunas.push(c);};
+  const[dupW,setDupW]=useState(null);
+  function chkDup(force){
+    if(!force&&leads&&leads.length){
+      var nm=function(s){return(s||'').replace(/[\s\-\.]/g,'').toLowerCase();};
+      var rn=nm(f.rut),tn=nm(f.telefono),eid=lead&&lead.id;
+      for(var i=0;i<leads.length;i++){
+        var l=leads[i];if(l.id===eid)continue;
+        if(rn&&rn.length>=7&&nm(l.rut)===rn){setDupW({tipo:'RUT',nom:l.nombre,est:ESTADOS[l.estado]?ESTADOS[l.estado].lbl:l.estado});return;}
+        if(tn&&tn.length>=8&&nm(l.telefono)===tn){setDupW({tipo:'Telefono',nom:l.nombre,est:ESTADOS[l.estado]?ESTADOS[l.estado].lbl:l.estado});return;}
+      }
+    }
+    onSave(f);
+  }
+  const sub=()=>{if(!f.nombre.trim()){setErr('Escribe el nombre');return;}setErr('');chkDup(false);};
+  const comunas=cfg.comunas||COMUNAS_DEFAULT;
+  return(<div className="ov" onClick={e=>{if(e.target.className==='ov')onClose();}}>
+    <div className="sheet">
+      <h2>{ed?'Editar Lead':'Nuevo Lead'}</h2>
+      <div className="sect">Datos de contacto</div>
+      <div className="fld"><label>Nombre *</label><input className="inp" value={f.nombre} onChange={e=>setF({...f,nombre:e.target.value})} placeholder="Nombre completo"/></div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        <div className="fld"><label>RUT</label><input className="inp" value={f.rut} onChange={e=>setF({...f,rut:e.target.value})} placeholder="12.345.678-9"/></div>
+        <div className="fld"><label>Telefono</label><input className="inp" value={f.telefono} onChange={e=>setF({...f,telefono:e.target.value})} placeholder="9 1234 5678" inputMode="tel"/></div>
+      </div>
+      <div className="fld"><label>Correo</label><input className="inp" value={f.correo} onChange={e=>setF({...f,correo:e.target.value})} placeholder="correo@email.com" inputMode="email"/></div>
+      <div className="divider"/>
+      <div className="sect">Ubicacion</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        <div className="fld"><label>Region</label>
+          <select className="inp" value={f.region} onChange={e=>setF({...f,region:e.target.value})} style={{cursor:'pointer'}}>
+            <option value="">Seleccionar...</option>
+            {REGIONES.map(r=><option key={r} value={r}>{r}</option>)}
+          </select>
+        </div>
+        <div className="fld"><label>Comuna</label><DDAdd label="comuna" value={f.comuna} onChange={v=>setF({...f,comuna:v})} opciones={comunas} onAdd={addCom}/></div>
+      </div>
+      <div className="divider"/>
+      <div className="sect">Vehiculo de interes</div>
+      <div className="fld"><label>Marca</label><DDAdd label="marca" value={f.marca} onChange={v=>setF({...f,marca:v,modelo:'',version:''})} opciones={cfg.marcas} onAdd={addM}/></div>
+      <div className="fld"><label>Modelo</label><DDAdd label="modelo" value={f.modelo} onChange={v=>setF({...f,modelo:v,version:''})} opciones={f.marca?mdM(f.marca):cfg.modelos.map(m=>m.n)} onAdd={addMo}/></div>
+      <div className="fld"><label>Version</label><DDAdd label="version" value={f.version} onChange={v=>setF({...f,version:v})} opciones={f.modelo?vdM(f.modelo):cfg.versiones.map(v=>v.n)} onAdd={addV}/></div>
+      <div className="divider"/>
+      <div className="sect">Clasificacion</div>
+      <div className="fld"><label>Origen</label><div className="chips">{Object.entries(ORIGENES).map((ent)=><div key={ent[0]} className={'chip'+(f.origen===ent[0]?' on':'')} onClick={()=>setF({...f,origen:f.origen===ent[0]?'':ent[0]})}>{ent[1].lbl}</div>)}</div></div>
+      <div className="fld"><label>Credito</label><div className="chips">{CREDITOS.map(c=><div key={c.v} className={'chip'+(f.credito===c.v?' on':'')} onClick={()=>setF({...f,credito:f.credito===c.v?'':c.v})}>{c.lbl}</div>)}</div></div>
+      <div className="fld"><label>Categoria</label><div className="chips">{[['A','A Caliente'],['B','B Tibio'],['C','C Frio']].map((p)=><div key={p[0]} className={'chip'+(f.cat===p[0]?' on':'')} onClick={()=>setF({...f,cat:f.cat===p[0]?'':p[0]})}>{p[1]}</div>)}</div></div>
+      <div className="fld"><div className={'chip'+(f.enSF?' on':'')} style={{width:'100%',textAlign:'center'}} onClick={()=>setF({...f,enSF:!f.enSF})}>{f.enSF?'✓ Cargado en Salesforce':'Aun NO en Salesforce'}</div></div>
+      <div className="divider"/>
+      <div className="sect">Auto en parte de pago (VPP)</div>
+      <div className="fld"><div className={'chip vt'+(f.vppTiene?' on':'')} style={{width:'100%',textAlign:'center'}} onClick={()=>setF({...f,vppTiene:!f.vppTiene})}>{f.vppTiene?'✓ Tiene VPP':'No tiene VPP'}</div></div>
+      {f.vppTiene&&<div className="vpp-box">
+        <div className="vpp-lbl">Datos del auto en parte de pago</div>
+        <div className="vpp-grid">
+          <div className="fld"><label>Marca</label><input className="inp" value={f.vppMarca} onChange={e=>setF({...f,vppMarca:e.target.value})} placeholder="Ej: Toyota"/></div>
+          <div className="fld"><label>Modelo</label><input className="inp" value={f.vppModelo} onChange={e=>setF({...f,vppModelo:e.target.value})} placeholder="Ej: Hilux"/></div>
+          <div className="fld"><label>Ano</label><input className="inp" value={f.vppAnio} onChange={e=>setF({...f,vppAnio:e.target.value})} placeholder="Ej: 2018" inputMode="numeric"/></div>
+          <div className="fld"><label>Kilometraje</label><input className="inp" value={f.vppKm} onChange={e=>setF({...f,vppKm:e.target.value})} placeholder="Ej: 95.000 km" inputMode="numeric"/></div>
+          <div className="fld"><label>Cant. duenos</label><input className="inp" value={f.vppDuenos} onChange={e=>setF({...f,vppDuenos:e.target.value})} placeholder="Ej: 2" inputMode="numeric"/></div>
+          <div className="fld"><label>Cant. llaves</label><input className="inp" value={f.vppLlaves} onChange={e=>setF({...f,vppLlaves:e.target.value})} placeholder="Ej: 1" inputMode="numeric"/></div>
+        </div>
+        <div className="fld"><label>Mantenciones realizadas en</label>
+          <div className="chips">{[['concesionario','Concesionario'],['particular','Particular'],['mixto','Mixto']].map((p)=><div key={p[0]} className={'chip'+(f.vppMant===p[0]?' on':'')} onClick={()=>setF({...f,vppMant:f.vppMant===p[0]?'':p[0]})}>{p[1]}</div>)}</div>
+        </div>
+      </div>}
+      {err&&<div className="errbox">{err}</div>}
+      {dupW&&<div style={{background:'rgba(245,166,35,.12)',border:'2px solid rgba(245,166,35,.5)',borderRadius:11,padding:13,marginBottom:9}}>
+        <div style={{fontSize:13,fontWeight:700,color:'var(--b)',marginBottom:5}}>⚠️ Lead duplicado</div>
+        <div style={{fontSize:12.5,marginBottom:10}}>{dupW.tipo} ya existe en: <strong>{dupW.nom}</strong> ({dupW.est})</div>
+        <div style={{display:'flex',gap:7}}>
+          <button style={{flex:1,background:'var(--b)',color:'#000',border:'none',borderRadius:8,padding:'8px 12px',fontSize:12,fontWeight:700,cursor:'pointer'}} onClick={()=>chkDup(true)}>Guardar igual</button>
+          <button style={{flex:1,background:'transparent',border:'1px solid var(--ln)',color:'var(--mu)',borderRadius:8,padding:'8px 12px',fontSize:12,cursor:'pointer'}} onClick={()=>setDupW(null)}>Cancelar</button>
+        </div>
+      </div>}
+      {!dupW&&<button className="save" onClick={sub}>{ed?'Guardar cambios':'Agregar lead'}</button>}
+      {!dupW&&<button className="cancel" onClick={onClose}>Cancelar</button>}
+    </div>
+  </div>);
+}
+
+/* ─── Modal: Nota + AI ──────────────────────────────── */
+/* ── Shared style helpers ── */
+const S={
+  inp:{width:'100%',background:'var(--inp)',border:'1px solid var(--ln)',borderRadius:10,padding:11,color:'var(--tx)',fontSize:14,fontFamily:"'Barlow',sans-serif",outline:'none'},
+  chip:on=>({background:on?'var(--ac)':'var(--inp)',border:'1px solid '+(on?'var(--ac)':'var(--ln)'),color:on?'#fff':'var(--mu)',padding:'7px 11px',borderRadius:10,fontSize:12,cursor:'pointer',fontWeight:600,fontFamily:"'Barlow Semi Condensed',sans-serif"}),
+  btn:type=>{const b={border:'none',borderRadius:10,padding:'9px 12px',fontSize:12,fontWeight:700,cursor:'pointer',textTransform:'uppercase',letterSpacing:'.4px',display:'flex',alignItems:'center',gap:5,justifyContent:'center',textDecoration:'none',fontFamily:"'Barlow Semi Condensed',sans-serif"};if(type==='acc')return Object.assign({},b,{background:'var(--ac)',color:'#fff'});if(type==='gn')return Object.assign({},b,{background:'var(--gn)',color:'#06351c'});if(type==='bl')return Object.assign({},b,{background:'var(--bl)',color:'#04223a'});if(type==='wa')return Object.assign({},b,{background:'#25d366',color:'#06351c'});return Object.assign({},b,{background:'transparent',border:'1px solid var(--ln)',color:'var(--mu)'}); },
+  badge:(bg,c)=>({fontSize:9,fontWeight:700,padding:'3px 7px',borderRadius:6,textTransform:'uppercase',letterSpacing:'.3px',background:bg,color:c,fontFamily:"'Barlow Semi Condensed',sans-serif"}),
+  tagm:{fontSize:9,fontWeight:600,padding:'3px 7px',borderRadius:6,background:'var(--c2)',color:'var(--mu)',border:'1px solid var(--ln)'},
+  sect:{fontSize:10,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700,marginBottom:7,fontFamily:"'Barlow Semi Condensed',sans-serif"},
+  divider:{height:1,background:'var(--ln)',margin:'12px 0'},
+};
+
+
+function ModalNota({lead,apiKey,onSave,onClose}){
+  const[txt,setTxt]=useState('');
+  const[est,setEst]=useState(lead.estado);
+  const[mot,setMot]=useState('');
+  const[motC,setMotC]=useState('');
+  const[err,setErr]=useState('');
+  const[aiLoad,setAiL]=useState(false);
+  const[aiRes,setAiR]=useState(null);
+
+  function doSave(sug,msgWA,prox,tareas){
+    var nEst=est||lead.estado;
+    var motivo=nEst==='close_lost'?(motC||mot):lead.motivoPerdida;
+    var h=hoy();
+    var nota={id:Date.now().toString(),fecha:h,texto:txt,sugerencia:sug||null,mensajeWA:msgWA||null};
+    var nc=(lead.noContesta||0);
+    if(nEst==='no_contesta')nc=nc+1;
+    var proxFinal=['close_won','close_lost'].includes(nEst)?lead.proximo:(prox||addD(h,2));
+    var updT=(lead.tareasPend||[]).concat(tareas||[]);
+    var upd=Object.assign({},lead,{
+      estado:nEst,
+      motivoPerdida:motivo||lead.motivoPerdida,
+      notas:(lead.notas||[]).concat([nota]),
+      tareasPend:updT,
+      noContesta:nc,
+      proximo:proxFinal,
+      sugerenciaIA:sug||lead.sugerenciaIA,
+      mensajeWAIA:msgWA||lead.mensajeWAIA,
+      cerradoEn:['close_won','close_lost'].includes(nEst)?h:lead.cerradoEn,
+    });
+    onSave(upd,['close_won','close_lost'].includes(nEst));
+  }
+
+  function handleGuardar(){
+    if(!txt.trim()){setErr('Escribe que paso en el contacto');return;}
+    setErr('');
+    doSave(null,null,null,[]);
+  }
+
+  function handleIA(){
+    if(!txt.trim()){setErr('Escribe que paso en el contacto');return;}
+    if(!apiKey){setErr('Sin API key de Google AI');return;}
+    setErr('');
+    setAiL(true);
+    callAI(lead,txt,apiKey).then(function(res){
+      var h=hoy();
+      var tareas=(res.tareas||[]).map(function(t){
+        return{id:Date.now().toString()+Math.random().toString(36).slice(2),descripcion:t.descripcion,pregunta:t.pregunta||'',fecha:addD(h,t.dias||1),completada:false,leadNombre:lead.nombre,leadTel:lead.telefono};
+      });
+      setAiR(Object.assign({},res,{tareas:tareas}));
+      setAiL(false);
+    }).catch(function(e){
+      var msg=e.message||'';
+      if(msg.indexOf('quota')>=0||msg.indexOf('RESOURCE_EXHAUSTED')>=0){
+        setErr('Limite alcanzado. Espera 30 segundos e intenta de nuevo.');
+      }else{
+        setErr('Error IA: '+msg);
+      }
+      setAiL(false);
+    });
+  }
+
+  function handleConfirmar(){
+    if(!aiRes)return;
+    var h=hoy();
+    var tareas=(aiRes.tareas||[]);
+    doSave(aiRes.sugerenciaLlamada,aiRes.mensajeWA,addD(h,aiRes.diasProximo||2),tareas);
+  }
+
+  var veh=[lead.marca,lead.modelo,lead.version].filter(Boolean).join(' · ')||'Sin vehiculo';
+  var estadoOpts=[
+    ['nuevo','Nuevo','#6b7585'],
+    ['primer_contacto','1er Contacto','#37a7ff'],
+    ['conversacion','Conversacion','#f5a623'],
+    ['negociacion','Negociacion','#ff8c42'],
+    ['no_contesta','No Contesta','#e06bff'],
+    ['close_won','Close Won','#27c281'],
+    ['close_lost','Close Lost','#ff4d2e'],
+  ];
+
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.72)',display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:50}} onClick={function(e){if(e.target===e.currentTarget&&!aiLoad)onClose();}}>
+      <div style={{background:'var(--card)',width:'100%',maxWidth:580,borderRadius:'20px 20px 0 0',padding:'20px 16px 32px',maxHeight:'90vh',overflowY:'auto'}}>
+        <div style={{fontSize:18,fontWeight:700,marginBottom:4,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Nota de contacto</div>
+        <div style={{fontSize:12,color:'var(--mu)',marginBottom:12}}>{lead.nombre} · {veh}</div>
+        <div style={{marginBottom:11}}>
+          <textarea style={Object.assign({},S.inp,{minHeight:85,resize:'vertical'})} value={txt} onChange={function(e){setTxt(e.target.value);}} placeholder="Contesto. Interesado. / No contesta, deje mensaje..."/>
+        </div>
+        <div style={{marginBottom:11}}>
+          <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:7,fontWeight:700}}>Actualizar estado</label>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {estadoOpts.map(function(opt){
+              var v=opt[0],lbl=opt[1],c=opt[2];
+              var isOn=est===v;
+              return <div key={v} style={{background:isOn?c:'var(--inp)',border:'1px solid '+(isOn?c:'var(--ln)'),color:isOn?'#fff':'var(--mu)',padding:'7px 11px',borderRadius:10,fontSize:12,cursor:'pointer',fontWeight:600,fontFamily:"'Barlow Semi Condensed',sans-serif"}} onClick={function(){setEst(isOn?lead.estado:v);}}>{lbl}</div>;
+            })}
+          </div>
+          {est==='no_contesta'&&<div style={{marginTop:8,padding:'8px 11px',background:'rgba(224,107,255,.1)',border:'1px solid rgba(224,107,255,.3)',borderRadius:8,fontSize:12,color:'#e06bff'}}>Recordatorio en 2 dias. Intento {(lead.noContesta||0)+1}/3.</div>}
+        </div>
+        {est==='close_lost'&&(
+          <div style={{marginBottom:11}}>
+            <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:7,fontWeight:700}}>Motivo de perdida</label>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:7}}>
+              {MOTIVOS.map(function(m){return <div key={m} style={S.chip(mot===m)} onClick={function(){setMot(mot===m?'':m);setMotC('');}}>{m}</div>;})}
+            </div>
+            <input style={S.inp} value={motC} onChange={function(e){setMotC(e.target.value);setMot('');}} placeholder="Otro motivo..."/>
+          </div>
+        )}
+        {aiRes&&(
+          <div style={{background:'rgba(55,167,255,.08)',border:'1px solid rgba(55,167,255,.22)',borderRadius:10,padding:12,marginBottom:9}}>
+            <div style={{fontSize:10,color:'var(--bl)',fontWeight:700,textTransform:'uppercase',marginBottom:6}}>Sugerencia IA</div>
+            <div style={{fontSize:13,lineHeight:1.5}}>{aiRes.sugerenciaLlamada}</div>
+            {aiRes.mensajeWA&&<div style={{marginTop:8,fontSize:12,background:'rgba(37,211,102,.08)',padding:'8px 10px',borderRadius:7,border:'1px solid rgba(37,211,102,.2)'}}>
+              <div style={{fontSize:10,color:'#25d366',fontWeight:700,marginBottom:4}}>WhatsApp listo</div>
+              {aiRes.mensajeWA}
+              <button style={{marginTop:6,background:'#25d366',color:'#06351c',border:'none',borderRadius:7,padding:'5px 10px',fontSize:11,fontWeight:700,cursor:'pointer'}} onClick={function(){copyText(aiRes.mensajeWA);}}>Copiar</button>
+            </div>}
+          </div>
+        )}
+        {err&&<div style={{fontSize:12,color:'var(--a)',marginBottom:9,padding:'8px 11px',background:'rgba(255,77,46,.1)',borderRadius:8}}>{err}</div>}
+        {aiLoad&&<div style={{textAlign:'center',padding:12,color:'var(--bl)',fontWeight:600}}>Analizando con IA...</div>}
+        {!aiLoad&&!aiRes&&(
+          <div style={{display:'flex',gap:7,marginTop:8}}>
+            {apiKey&&<button style={Object.assign({},S.btn('bl'),{flex:1})} onClick={handleIA}>Analizar con IA</button>}
+            <button style={Object.assign({},S.btn('acc'),{flex:1})} onClick={handleGuardar}>Guardar nota</button>
+          </div>
+        )}
+        {!aiLoad&&aiRes&&<button style={Object.assign({},S.btn('acc'),{width:'100%',marginTop:8})} onClick={handleConfirmar}>Confirmar y guardar</button>}
+        {!aiLoad&&<button style={{width:'100%',background:'transparent',color:'var(--mu)',border:'none',padding:10,fontSize:13,cursor:'pointer',marginTop:4}} onClick={onClose}>Cancelar</button>}
+      </div>
+    </div>
+  );
+}
+
+
+function ModalEvento({lead,evento,onSave,onClose}){
+  const editing=!!(evento&&evento.id);
+  const[tipo,setTipo]=useState(editing?evento.tipo:'llamada');
+  const[fecha,setFecha]=useState(editing?evento.fecha:hoy());
+  const[hora,setHora]=useState(editing?evento.hora:'10:00');
+  const[desc,setDesc]=useState(editing?evento.descripcion:'');
+  const[err,setErr]=useState('');
+  function sub(){
+    if(!fecha||!hora){setErr('Selecciona fecha y hora');return;}
+    let nuevosEvs;
+    if(editing){
+      nuevosEvs=(lead.eventos||[]).map(e=>e.id===evento.id?Object.assign({},e,{tipo,fecha,hora,descripcion:desc.trim()}):e);
+    }else{
+      const ev={id:Date.now().toString(),tipo,fecha,hora,descripcion:desc.trim(),completado:false,leadId:lead.id,leadNombre:lead.nombre};
+      nuevosEvs=(lead.eventos||[]).concat([ev]);
+    }
+    onSave(Object.assign({},lead,{eventos:nuevosEvs}));
+  }
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.72)',display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:50}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:'var(--card)',width:'100%',maxWidth:580,borderRadius:'20px 20px 0 0',padding:'20px 16px 32px',maxHeight:'80vh',overflowY:'auto',animation:'slideup .25s'}}>
+        <div style={{fontSize:18,fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif",marginBottom:4}}>{editing?'✏️ Editar evento':'📅 Agendar evento'}</div>
+        <div style={{fontSize:12,color:'var(--mu)',marginBottom:16}}>{lead.nombre}</div>
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:8,fontWeight:700}}>Tipo de evento</label>
+          <div style={{display:'flex',gap:8}}>
+            {TIPOS_EV.map(t=>{const on=tipo===t.v;return(
+              <div key={t.v} style={{flex:1,textAlign:'center',padding:'12px 8px',borderRadius:12,border:'2px solid '+(on?t.c:'var(--ln)'),background:on?t.c+'22':'var(--inp)',cursor:'pointer',transition:'all .15s'}} onClick={()=>setTipo(t.v)}>
+                <div style={{fontSize:24,marginBottom:5}}>{t.ico}</div>
+                <div style={{fontSize:11.5,fontWeight:700,color:on?t.c:'var(--mu)',fontFamily:"'Barlow Semi Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'.4px'}}>{t.lbl}</div>
+              </div>
+            );})}
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+          <div>
+            <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:5,fontWeight:700}}>Fecha *</label>
+            <input style={Object.assign({},S.inp)} type="date" value={fecha} onChange={e=>setFecha(e.target.value)}/>
+          </div>
+          <div>
+            <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:5,fontWeight:700}}>Hora *</label>
+            <input style={Object.assign({},S.inp)} type="time" value={hora} onChange={e=>setHora(e.target.value)}/>
+          </div>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:5,fontWeight:700}}>Descripcion (opcional)</label>
+          <input style={Object.assign({},S.inp)} value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Ej: Llamar para confirmar precio del XUV3XO"/>
+        </div>
+        {err&&<div style={{fontSize:12,color:'var(--a)',marginBottom:9,padding:'8px 11px',background:'rgba(255,77,46,.1)',borderRadius:8}}>{err}</div>}
+        <button style={Object.assign({},S.btn('acc'),{width:'100%',padding:13,fontSize:15,borderRadius:12})} onClick={sub}>{editing?'Guardar cambios':'Agendar'}</button>
+        <button style={{width:'100%',background:'transparent',color:'var(--mu)',border:'none',padding:11,fontSize:13.5,cursor:'pointer',marginTop:3}} onClick={onClose}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+
+function ModalPV({lead,onSave,onClose}){
+  var ps=lead.postVenta||{};
+  var[f,setF]=useState({
+    tipoVenta:ps.tipoVenta||'',fechaEntrega:ps.fechaEntrega||hoy(),fechaNac:ps.fechaNac||'',
+    precioBase:ps.precioBase||ps.precioVenta||'',obs:ps.obs||'',
+    pagos:ps.pagos||[],regalos:ps.regalos||[],
+    seguroAuto:ps.seguroAuto||false,aseguradora:ps.aseguradora||'',primaSeguro:ps.primaSeguro||'',
+    entregado:ps.entregado||false,fechaEntregaReal:ps.fechaEntregaReal||null,
+  });
+  function up(k,v){setF(function(p){return Object.assign({},p,{[k]:v});});}
+
+  function addPago(tipo){
+    up('pagos',f.pagos.concat([{id:Date.now().toString(),tipo:tipo,fecha:hoy(),monto:'',banco:'',cuotas:'',valorCuota:'',cuoton:'',valorVPP:'',montoPasa:'',vuelto:''}]));
+  }
+  function updPago(id,k,v){up('pagos',f.pagos.map(function(p){return p.id===id?Object.assign({},p,{[k]:v}):p;}));}
+  function delPago(id){up('pagos',f.pagos.filter(function(p){return p.id!==id;}));}
+  function addRegalo(tipo){up('regalos',f.regalos.concat([{id:Date.now().toString(),tipo:tipo,desc:'',monto:''}]));}
+  function updReg(id,k,v){up('regalos',f.regalos.map(function(r){return r.id===id?Object.assign({},r,{[k]:v}):r;}));}
+  function delReg(id){up('regalos',f.regalos.filter(function(r){return r.id!==id;}));}
+
+  var veh=[lead.marca,lead.modelo].filter(Boolean).join(' ');
+  var TIPO_PAGO=[['transferencia','💸 Transferencia'],['credito','🏦 Credito bancario'],['vpp','🚗 VPP (parte de pago)']];
+  var TIPO_REGALO=[['inscripcion','📋 Inscripcion'],['combustible','⛽ Combustible GiftCard'],['mantenciones','🔧 Mantenciones'],['otro','🎁 Otro']];
+
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.72)',display:'flex',alignItems:'flex-end',justifyContent:'center',zIndex:50}} onClick={function(e){if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:'var(--card)',width:'100%',maxWidth:600,borderRadius:'20px 20px 0 0',padding:'20px 16px 32px',maxHeight:'93vh',overflowY:'auto'}}>
+        <div style={{fontSize:18,fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif",marginBottom:4}}>🏆 Ficha de Venta</div>
+        <div style={{fontSize:12,color:'var(--mu)',marginBottom:16}}>{lead.nombre} · {veh}</div>
+
+        <div style={{fontSize:10.5,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700,marginBottom:8,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Datos del cliente</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:14}}>
+          <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Fecha nacimiento</label><input style={S.inp} type="date" value={f.fechaNac} onChange={function(e){up('fechaNac',e.target.value);}}/></div>
+          <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Fecha entrega pactada</label><input style={S.inp} type="date" value={f.fechaEntrega} onChange={function(e){up('fechaEntrega',e.target.value);}}/></div>
+        </div>
+        <div style={{marginBottom:14}}>
+          <div style={Object.assign({},S.chip(f.seguroAuto),{borderRadius:10,textAlign:'center',marginBottom:f.seguroAuto?8:0})} onClick={function(){up('seguroAuto',!f.seguroAuto);}}>🛡️ {f.seguroAuto?'✓ Se vendio seguro automotriz':'Se vendio seguro automotriz?'}</div>
+          {f.seguroAuto&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+            <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Aseguradora</label><input style={S.inp} value={f.aseguradora} onChange={function(e){up('aseguradora',e.target.value);}} placeholder="Ej: HDI, Mapfre"/></div>
+            <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Prima mensual</label><input style={S.inp} value={f.primaSeguro} onChange={function(e){up('primaSeguro',e.target.value);}} placeholder="Ej: $45.000"/></div>
+          </div>}
+        </div>
+
+        <div style={{height:1,background:'var(--ln)',margin:'14px 0'}}/>
+        <div style={{fontSize:10.5,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700,marginBottom:10,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Condiciones del cierre</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:9,marginBottom:12}}>
+          <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Tipo de venta</label>
+            <select style={Object.assign({},S.inp,{cursor:'pointer'})} value={f.tipoVenta} onChange={function(e){up('tipoVenta',e.target.value);}}>
+              <option value="">Seleccionar...</option>
+              <option value="contado">Contado</option>
+              <option value="convencional">Credito Convencional</option>
+              <option value="inteligente">Credito Inteligente</option>
+            </select>
+          </div>
+          <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Precio base</label><input style={S.inp} value={f.precioBase} onChange={function(e){up('precioBase',e.target.value);}} placeholder="Ej: $15.500.000"/></div>
+        </div>
+
+        <div style={{height:1,background:'var(--ln)',margin:'14px 0'}}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+          <div style={{fontSize:10.5,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Metodos de pago</div>
+          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+            {TIPO_PAGO.map(function(tp){return<button key={tp[0]} style={{background:'var(--c2)',border:'1px solid var(--ln)',color:'var(--mu)',borderRadius:8,padding:'5px 9px',fontSize:11,fontWeight:600,cursor:'pointer'}} onClick={function(){addPago(tp[0]);}}>{tp[1]}</button>;})}
+          </div>
+        </div>
+        {f.pagos.length===0&&<div style={{fontSize:12,color:'var(--mu)',textAlign:'center',padding:'12px 0',fontStyle:'italic'}}>Sin pagos agregados aun</div>}
+        {f.pagos.map(function(pg){
+          return(
+            <div key={pg.id} style={{background:'var(--c2)',border:'1px solid var(--ln)',borderRadius:11,padding:13,marginBottom:9,position:'relative'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--bl)'}}>{pg.tipo==='transferencia'?'💸 Transferencia':pg.tipo==='credito'?'🏦 Credito bancario':'🚗 VPP (parte de pago)'}</div>
+                <button style={{background:'none',border:'none',color:'var(--mu)',fontSize:14,cursor:'pointer',padding:'2px 6px'}} onClick={function(){delPago(pg.id);}}>✕</button>
+              </div>
+              {pg.tipo==='transferencia'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Fecha</label><input style={S.inp} type="date" value={pg.fecha} onChange={function(e){updPago(pg.id,'fecha',e.target.value);}}/></div>
+                <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Monto</label><input style={S.inp} value={pg.monto} onChange={function(e){updPago(pg.id,'monto',e.target.value);}} placeholder="Ej: $3.000.000"/></div>
+              </div>}
+              {pg.tipo==='credito'&&<div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+                  <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Banco</label><input style={S.inp} value={pg.banco} onChange={function(e){updPago(pg.id,'banco',e.target.value);}} placeholder="Ej: BancoEstado"/></div>
+                  <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Monto credito</label><input style={S.inp} value={pg.monto} onChange={function(e){updPago(pg.id,'monto',e.target.value);}} placeholder="Ej: $12.000.000"/></div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                  <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Cuotas</label><input style={S.inp} value={pg.cuotas} onChange={function(e){updPago(pg.id,'cuotas',e.target.value);}} placeholder="48"/></div>
+                  <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Valor cuota</label><input style={S.inp} value={pg.valorCuota} onChange={function(e){updPago(pg.id,'valorCuota',e.target.value);}} placeholder="$185.000"/></div>
+                  <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Cuoton final</label><input style={S.inp} value={pg.cuoton} onChange={function(e){updPago(pg.id,'cuoton',e.target.value);}} placeholder="$5.000.000"/></div>
+                </div>
+              </div>}
+              {pg.tipo==='vpp'&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Valor VPP tasado</label><input style={S.inp} value={pg.valorVPP} onChange={function(e){updPago(pg.id,'valorVPP',e.target.value);}} placeholder="Ej: $3.500.000"/></div>
+                <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Pasa al negocio</label><input style={S.inp} value={pg.montoPasa} onChange={function(e){updPago(pg.id,'montoPasa',e.target.value);}} placeholder="Ej: $3.000.000"/></div>
+                <div><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:4,fontWeight:700}}>Vuelto al cliente</label><input style={S.inp} value={pg.vuelto} onChange={function(e){updPago(pg.id,'vuelto',e.target.value);}} placeholder="Ej: $500.000"/></div>
+              </div>}
+            </div>
+          );
+        })}
+
+        <div style={{height:1,background:'var(--ln)',margin:'14px 0'}}/>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+          <div style={{fontSize:10.5,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Regalos y bonos</div>
+          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+            {TIPO_REGALO.map(function(tr){return<button key={tr[0]} style={{background:'var(--c2)',border:'1px solid var(--ln)',color:'var(--mu)',borderRadius:8,padding:'5px 9px',fontSize:11,fontWeight:600,cursor:'pointer'}} onClick={function(){addRegalo(tr[0]);}}>{tr[1]}</button>;})}
+          </div>
+        </div>
+        {f.regalos.length===0&&<div style={{fontSize:12,color:'var(--mu)',textAlign:'center',padding:'12px 0',fontStyle:'italic'}}>Sin regalos agregados</div>}
+        {f.regalos.map(function(rg){return(
+          <div key={rg.id} style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.2)',borderRadius:10,padding:11,marginBottom:8,display:'flex',gap:9,alignItems:'flex-start'}}>
+            <span style={{fontSize:18,marginTop:2}}>{rg.tipo==='inscripcion'?'📋':rg.tipo==='combustible'?'⛽':rg.tipo==='mantenciones'?'🔧':'🎁'}</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:11.5,fontWeight:700,color:'var(--pu)',marginBottom:6}}>{rg.tipo==='inscripcion'?'Inscripcion':rg.tipo==='combustible'?'Combustible GiftCard':rg.tipo==='mantenciones'?'Mantenciones':'Otro regalo'}</div>
+              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:7}}>
+                <input style={S.inp} value={rg.desc} onChange={function(e){updReg(rg.id,'desc',e.target.value);}} placeholder={rg.tipo==='mantenciones'?'Ej: 2 mantenciones gratis':rg.tipo==='combustible'?'Ej: GiftCard Copec':'Descripcion...'}/>
+                <input style={S.inp} value={rg.monto} onChange={function(e){updReg(rg.id,'monto',e.target.value);}} placeholder="Monto"/>
+              </div>
+            </div>
+            <button style={{background:'none',border:'none',color:'var(--mu)',fontSize:14,cursor:'pointer',padding:'2px 6px',marginTop:2}} onClick={function(){delReg(rg.id);}}>✕</button>
+          </div>
+        );})}
+
+        <div style={{marginTop:8}}><label style={{fontSize:10.5,color:'var(--mu)',display:'block',marginBottom:5,fontWeight:700}}>Observaciones</label><textarea style={Object.assign({},S.inp,{minHeight:55,resize:'vertical'})} value={f.obs} onChange={function(e){up('obs',e.target.value);}} placeholder="Notas adicionales..."/></div>
+        <button style={Object.assign({},S.btn('acc'),{width:'100%',padding:14,fontSize:15,borderRadius:12,marginTop:14})} onClick={function(){onSave(Object.assign({},lead,{postVenta:Object.assign({},f)}));}}>Guardar ficha</button>
+        <button style={{width:'100%',background:'transparent',color:'var(--mu)',border:'none',padding:10,fontSize:13,cursor:'pointer',marginTop:4}} onClick={onClose}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+
+function ModalSF({lead,onOk,onClose}){
+  return(<div className="ov"><div className="sheet">
+    <div className="sfalert">
+      <div className="sfaico">📋</div>
+      <div className="sfat">No olvides cerrar en Salesforce</div>
+      <div className="sfad">Marcaste a <strong>{lead.nombre}</strong> como <strong>{ESTADOS[lead.estado]&&ESTADOS[lead.estado].lbl}</strong>. Recuerda reflejarlo en Salesforce para mantener la sistematica de la empresa.</div>
+      <div className="acts" style={{justifyContent:'center',gap:10}}>
+        <button className="btn grn" onClick={onOk}>Ya lo cerre en SF ✓</button>
+        <button className="btn gh" onClick={onClose}>Lo hare despues</button>
+      </div>
+    </div>
+  </div></div>);
+}
+
+/* ─── Lead Detail Panel ─────────────────────────────── */
+function MotivoPicker({lead,onSave}){
+  const[editing,setEditing]=useState(false);
+  const[mot,setMot]=useState(lead.motivoPerdida||'');
+  const[custom,setCustom]=useState('');
+  function save(){
+    const val=custom.trim()||mot;
+    if(val)onSave(lead.id,val);
+    setEditing(false);
+  }
+  if(!editing)return(
+    <div style={{marginBottom:10,padding:'8px 11px',background:'rgba(255,77,46,.08)',borderRadius:8,display:'flex',alignItems:'center',gap:8}}>
+      <span style={{fontSize:12.5,color:'var(--a)',flex:1}}>Motivo: {lead.motivoPerdida}</span>
+      <button style={{background:'none',border:'1px solid rgba(255,77,46,.4)',color:'var(--a)',fontSize:11,cursor:'pointer',padding:'3px 8px',borderRadius:6,fontWeight:700}} onClick={()=>{setMot(lead.motivoPerdida||'');setCustom('');setEditing(true);}}>Editar</button>
+    </div>
+  );
+  return(
+    <div style={{marginBottom:10,background:'rgba(255,77,46,.08)',border:'1px solid rgba(255,77,46,.3)',borderRadius:10,padding:11}}>
+      <div style={{fontSize:10,color:'var(--a)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Cambiar motivo</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+        {MOTIVOS.map(m=><div key={m} style={{background:mot===m?'var(--a)':'var(--c2)',border:'1px solid '+(mot===m?'var(--a)':'var(--ln)'),color:mot===m?'#fff':'var(--mu)',padding:'6px 10px',borderRadius:8,fontSize:11.5,cursor:'pointer',fontWeight:600}} onClick={()=>{setMot(m);setCustom('');}}>{m}</div>)}
+      </div>
+      <input style={{width:'100%',background:'var(--inp)',border:'1px solid var(--ln)',borderRadius:8,padding:'8px 10px',color:'var(--tx)',fontSize:13,marginBottom:8,fontFamily:"'Barlow',sans-serif"}} value={custom} onChange={e=>{setCustom(e.target.value);setMot('');}} placeholder="Otro motivo..."/>
+      <div style={{display:'flex',gap:7}}>
+        <button style={{flex:1,background:'var(--a)',color:'#fff',border:'none',borderRadius:8,padding:'8px',fontSize:12.5,fontWeight:700,cursor:'pointer'}} onClick={save}>Guardar</button>
+        <button style={{flex:1,background:'transparent',border:'1px solid var(--ln)',color:'var(--mu)',borderRadius:8,padding:'8px',fontSize:12.5,cursor:'pointer'}} onClick={()=>setEditing(false)}>Cancelar</button>
+      </div>
+    </div>
+  );
+}
+
+
+function DetailPanel({lead,onClose,onNota,onEvento,onEdit,onDel,onSF,onTask,onCompleteEv,onUpdateMotivo,onReopen,isMob}){
+  const h=hoy();const veh=[lead.marca,lead.modelo,lead.version].filter(Boolean).join(' · ')||'Sin vehiculo';
+  const ec=ESTADOS[lead.estado]||{};const oc=ORIGENES[lead.origen];const ci=CREDITOS.find(c=>c.v===lead.credito);
+  const closed=['close_won','close_lost'].includes(lead.estado);
+  const sl=(()=>{if(closed)return{t:ec.lbl,c:ec.c};if(!lead.proximo)return{t:'Sin fecha',c:'var(--mu)'};const d=dif(h,lead.proximo);if(d<0)return{t:'Atrasado '+Math.abs(d)+'d',c:'var(--a)'};if(d===0)return{t:'Llamar HOY',c:'var(--ac)'};return{t:'En '+d+'d',c:'var(--mu)'}})();
+  const wl=waUrl(lead.telefono,'');const pt=(lead.tareasPend||[]).filter(t=>!t.completada);
+  return(<div className={isMob?'dp mob':'dp'}>
+    <div className="dphd">
+      <div><div style={{fontSize:18,fontWeight:700}}>{lead.nombre}</div><div style={{fontSize:12,color:'var(--mu)',marginTop:2}}>{veh}</div></div>
+      {isMob&&<button className="dpcl" onClick={onClose}>✕</button>}
+    </div>
+    <div className="bgs" style={{marginBottom:12}}>
+      <span className="badge" style={{background:ec.bg,color:ec.c}}>{ec.lbl}</span>
+      {oc&&<span className="badge" style={{background:'rgba(0,0,0,.2)',color:oc.c,border:'1px solid '+oc.c}}>{oc.lbl}</span>}
+      {ci&&<span className="badge" style={{background:'rgba(0,0,0,.2)',color:ci.c,border:'1px solid '+ci.c}}>{ci.lbl}</span>}
+      <span style={{fontSize:10,fontWeight:700,color:sl.c}}>{sl.t}</span>
+    </div>
+    <div style={{fontSize:12.5,marginBottom:12}}>
+      {lead.telefono&&<div style={{marginBottom:4}}>📞 <a href={'tel:'+lead.telefono} style={{color:'var(--bl)',textDecoration:'none'}}>{lead.telefono}</a></div>}
+      {lead.correo&&<div style={{color:'var(--mu)',marginBottom:4}}>✉ {lead.correo}</div>}
+      {lead.rut&&<div style={{color:'var(--mu)',marginBottom:4}}>RUT {lead.rut}</div>}
+      {(lead.region||lead.comuna)&&<div style={{color:'var(--mu)',marginBottom:4}}>📍 {[lead.comuna,lead.region].filter(Boolean).join(', ')}</div>}
+      <div style={{color:'var(--mu)',fontSize:11.5}}>Abierto {dif(lead.creadoEn,h)}d — desde {fmt(lead.creadoEn)}</div>
+    </div>
+    {lead.vppTiene&&<div style={{background:'rgba(167,139,250,.08)',border:'1px solid rgba(167,139,250,.22)',borderRadius:9,padding:10,marginBottom:11}}>
+      <div style={{fontSize:9.5,color:'var(--pu)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}}>Auto en parte de pago</div>
+      <div style={{fontSize:12,color:'var(--tx)'}}>{[lead.vppMarca,lead.vppModelo,lead.vppAnio&&'('+lead.vppAnio+')'].filter(Boolean).join(' ')}</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:5,marginTop:5}}>
+        {lead.vppKm&&<span className="tagm">{lead.vppKm} km</span>}
+        {lead.vppDuenos&&<span className="tagm">{lead.vppDuenos} dueno{lead.vppDuenos!=='1'?'s':''}</span>}
+        {lead.vppLlaves&&<span className="tagm">{lead.vppLlaves} llave{lead.vppLlaves!=='1'?'s':''}</span>}
+        {lead.vppMant&&<span className="tagm">Mant. {lead.vppMant}</span>}
+      </div>
+    </div>}
+    {lead.motivoPerdida&&<MotivoPicker lead={lead} onSave={onUpdateMotivo}/>}
+    {(lead.noContesta||0)>=3&&(
+      <div style={{background:'rgba(224,107,255,.1)',border:'2px solid rgba(224,107,255,.4)',borderRadius:12,padding:'13px 14px',marginBottom:10}}>
+        <div style={{fontSize:14,fontWeight:700,color:'#e06bff',marginBottom:5,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>⚠️ No ha contestado en {lead.noContesta} oportunidades</div>
+        <div style={{fontSize:12.5,color:'var(--mu)',marginBottom:10}}>Se recomienda cerrar este lead. Recuerda tambien cerrarlo en Salesforce.</div>
+        <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+          <button style={{background:'var(--a)',color:'#fff',border:'none',borderRadius:9,padding:'8px 13px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'.4px'}} onClick={()=>onNota(lead)}>Cerrar lead</button>
+          <button style={{background:lead.enSF?'transparent':'rgba(0,192,232,.2)',border:'1px solid rgba(0,192,232,.5)',color:'#00c0e8',borderRadius:9,padding:'8px 13px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif",textTransform:'uppercase',letterSpacing:'.4px'}} onClick={()=>onSF(lead.id)}>{lead.enSF?'SF ✓':'Cerrar en Salesforce'}</button>
+        </div>
+      </div>
+    )}
+    {lead.sugerenciaIA&&<div className="ia-box"><div className="ia-lbl">📞 Sig. llamada</div><div className="ia-txt">{lead.sugerenciaIA}</div>{lead.proximo&&<div style={{fontSize:10.5,color:'var(--mu)',marginTop:3}}>Prog: {fmt(lead.proximo)}</div>}</div>}
+    {lead.mensajeWAIA&&<div className="wa-box"><div className="wa-lbl">💬 WhatsApp</div><div className="ia-txt" style={{fontSize:12}}>{lead.mensajeWAIA}</div>
+      <div className="acts" style={{marginTop:6}}><button className="btn gh sm" onClick={()=>cp(lead.mensajeWAIA)}>Copiar</button>{wl&&<a className="btn wa sm" href={waUrl(lead.telefono,lead.mensajeWAIA)} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>Abrir WA</a>}</div>
+    </div>}
+    {pt.length>0&&<div style={{marginBottom:12}}>
+      <div className="dpl">Tareas ({pt.length})</div>
+      {pt.slice(0,3).map(t=><div key={t.id} className="ti"><div className="tchk" onClick={()=>onTask(lead.id,t.id)}>✓</div><div className="ttxt">{t.descripcion}<div style={{fontSize:10.5,color:'var(--mu)',marginTop:1}}>{fmt(t.fecha)}</div></div></div>)}
+    </div>}
+    {!closed&&<div className="acts" style={{marginBottom:7}}>
+      <button className="btn acc" onClick={()=>onNota(lead)}>📝 Nota</button>
+      <button className="btn blu" onClick={()=>onEvento(lead)}>📅 Agendar</button>
+      {wl&&<a className="btn wa" href={wl} target="_blank" rel="noreferrer" style={{textDecoration:'none'}}>WA</a>}
+    </div>}
+    {closed&&<div style={{background:'rgba(255,140,66,.1)',border:'1px solid rgba(255,140,66,.3)',borderRadius:11,padding:'11px 13px',marginBottom:9}}>
+      <div style={{fontSize:11,color:'#ff8c42',fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>Reabrir lead</div>
+      <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+        {[['conversacion','Conversacion'],['negociacion','Negociacion'],['primer_contacto','1er Contacto']].map(function(p){return(
+          <button key={p[0]} style={{background:'#ff8c42',color:'#fff',border:'none',borderRadius:9,padding:'7px 12px',fontSize:11.5,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif"}} onClick={()=>onReopen(lead.id,p[0])}>↩ {p[1]}</button>
+        );})}
+      </div>
+    </div>}
+    <div className="acts" style={{marginBottom:7}}>
+      {!closed&&<button className={'btn sm '+(lead.enSF?'gh':'acc')} onClick={()=>onSF(lead.id)}>{lead.enSF?'SF ✓':'Cargar SF'}</button>}
+      <button className="btn gh sm" onClick={()=>onEdit(lead)}>Editar</button>
+      <button className="btn gh sm" onClick={()=>{if(window.confirm('Eliminar lead?'))onDel(lead.id);}}>Eliminar</button>
+    </div>
+    {lead.eventos&&lead.eventos.filter(e=>!e.completado).length>0&&(
+      <div style={{marginBottom:12}}>
+        <div className="dpl">Eventos agendados ({lead.eventos.filter(e=>!e.completado).length})</div>
+        {lead.eventos.filter(e=>!e.completado).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora)).map(ev=>{
+          const te=TIPOS_EV.find(t=>t.v===ev.tipo)||TIPOS_EV[0];
+          const d=dif(hoy(),ev.fecha);const isH=d===0;const isO=d<0;
+          return(
+            <div key={ev.id} style={{display:'flex',alignItems:'flex-start',gap:9,padding:'9px 11px',background:'var(--c2)',borderRadius:9,marginBottom:6,border:'1px solid '+(isO?'rgba(255,77,46,.3)':isH?te.c+'55':'var(--ln)')}}>
+              <span style={{fontSize:16,marginTop:2}}>{te.ico}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12.5,fontWeight:700,color:isO?'var(--a)':isH?te.c:'var(--tx)'}}>{ev.hora} · {te.lbl}</div>
+                <div style={{fontSize:11,color:'var(--mu)',marginTop:1}}>{isO?'Vencido '+Math.abs(d)+'d':isH?'HOY':'En '+d+'d'} · {ev.fecha.split('-').reverse().join('/')}</div>
+                {ev.descripcion&&<div style={{fontSize:12,marginTop:3}}>{ev.descripcion}</div>}
+              </div>
+              <div style={{display:'flex',gap:4}}>
+                <button style={{background:'none',border:'1px solid var(--ln)',color:'var(--mu)',fontSize:11,cursor:'pointer',padding:'3px 7px',borderRadius:6,fontWeight:600}} onClick={()=>onEvento(lead,ev)}>✏️</button>
+                <button style={{background:'none',border:'1px solid rgba(39,194,129,.4)',color:'var(--gn)',fontSize:11,cursor:'pointer',padding:'3px 7px',borderRadius:6,fontWeight:700}} onClick={()=>onCompleteEv(lead.id,ev.id)}>✓</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+    {lead.notas&&lead.notas.length>0&&<div>
+      <div className="dpl">Historial ({lead.notas.length})</div>
+      {[...lead.notas].reverse().slice(0,5).map(n=><div key={n.id} className="ni">
+        <div className="nif">{fmt(n.fecha)}</div><div className="nit">{n.texto}</div>
+        {n.sugerencia&&<div className="nis">📞 {n.sugerencia}</div>}
+        {n.mensajeWA&&<div style={{fontSize:11,color:'#25d366',marginTop:3,padding:'3px 7px',background:'rgba(37,211,102,.07)',borderRadius:5}}>💬 {n.mensajeWA.slice(0,80)}...</div>}
+      </div>)}
+    </div>}
+  </div>);
+}
+
+/* ─── Dashboard ─────────────────────────────────────── */
+function ViewDash({leads,onNav}){
+  const h=hoy();
+  const act=leads.filter(l=>!['close_won','close_lost'].includes(l.estado));
+  const ph=act.filter(l=>l.proximo&&dif(l.proximo,h)>=0);
+  const tp=leads.flatMap(l=>(l.tareasPend||[]).filter(t=>!t.completada&&dif(t.fecha,h)>=0)).length;
+  const won=leads.filter(l=>l.estado==='close_won'&&l.cerradoEn&&l.cerradoEn.slice(0,7)===h.slice(0,7));
+  const sfp=act.filter(l=>!l.enSF);
+  const tasa=(()=>{const c=leads.filter(l=>['close_won','close_lost'].includes(l.estado));if(!c.length)return null;return Math.round(leads.filter(l=>l.estado==='close_won').length/c.length*100);})();
+  const rec=act.slice().sort((a,b)=>(a.proximo||'9999').localeCompare(b.proximo||'9999')).slice(0,5);
+  const evHoy=leads.flatMap(l=>(l.eventos||[]).filter(e=>!e.completado&&e.fecha===h).map(e=>({...e,leadNom:l.nombre})));
+  const psHoy=leads.filter(l=>l.estado==='close_won'&&l.postVenta).flatMap(l=>{const veh=[l.marca,l.modelo].filter(Boolean).join(' ');const fups=getFups(l.postVenta.fechaEntrega||l.cerradoEn||h,l.nombre,veh);const bd=getBday(l.postVenta.fechaNac,l.nombre,veh);const all=[...fups,...(bd?[bd]:[])];return all.filter(f=>f&&dif(f.fecha,h)>=0&&dif(f.fecha,h)<=1).map(f=>({...f,leadNom:l.nombre}));});
+  return(<div className="inner">
+    <div className="pghd"><h2>Buenos dias <span>👋</span></h2></div>
+    {(ph.length>0||tp>0)&&<div className="alertbar" onClick={()=>onNav('leads')}>
+      <span style={{fontSize:19}}>🔔</span>
+      <span className="abtxt">{ph.length>0?ph.length+' clientes para llamar hoy':''}{ph.length>0&&tp>0?' · ':''}{tp>0?tp+' tareas pendientes':''}</span>
+      <span className="abnum">Ver</span>
+    </div>}
+    {psHoy.map((p,i)=><div key={i} className="alertbar" style={{background:'rgba(167,139,250,.1)',borderColor:'rgba(167,139,250,.28)',marginBottom:10}}>
+      <span style={{fontSize:19}}>{p.tipo==='bday'?'🎂':'📬'}</span>
+      <span className="abtxt">{p.tipo==='bday'?'Cumpleanos de '+p.leadNom+' hoy':'Seguimiento: '+p.leadNom}</span>
+      <button style={{background:'none',border:'none',color:'var(--pu)',fontSize:11,fontWeight:700,cursor:'pointer'}} onClick={()=>cp(p.msg)}>COPIAR</button>
+    </div>)}
+    {sfp.length>0&&<div className="alertbar" style={{background:'rgba(0,192,232,.07)',borderColor:'rgba(0,192,232,.28)'}} onClick={()=>onNav('leads')}>
+      <span style={{fontSize:19}}>📋</span>
+      <span className="abtxt">{sfp.length} leads pendientes de cargar en Salesforce</span>
+    </div>}
+    <div className="stats">
+      <div className="stat red"><div className="num">{ph.length}</div><div className="lbl">Llamar hoy</div></div>
+      <div className="stat grn"><div className="num">{won.length}</div><div className="lbl">Won este mes</div></div>
+      <div className="stat blu"><div className="num">{tasa!==null?tasa+'%':'--'}</div><div className="lbl">Tasa cierre</div></div>
+      <div className="stat org"><div className="num">{act.length}</div><div className="lbl">Activos</div></div>
+    </div>
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--mu)',marginBottom:10,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>📅 Agenda proxima</div>
+      {(function(){
+        var evs=leads.flatMap(function(l){return(l.eventos||[]).filter(function(e){return!e.completado;}).map(function(e){return Object.assign({},e,{leadNom:l.nombre});});});
+        var sorted=evs.sort(function(a,b){return(a.fecha+a.hora).localeCompare(b.fecha+b.hora);});
+        var vencidos=sorted.filter(function(e){return dif(h,e.fecha)<0;});
+        var hoyEv=sorted.filter(function(e){return e.fecha===h;});
+        var proxEv=sorted.filter(function(e){return dif(h,e.fecha)>0&&dif(h,e.fecha)<=7;});
+        if(evs.length===0)return <div style={{textAlign:'center',color:'var(--mu)',fontSize:12,padding:'10px 0',fontStyle:'italic'}}>Sin eventos agendados</div>;
+        return(<div>
+          {vencidos.slice(0,2).map(function(ev){var te=TIPOS_EV.find(function(t){return t.v===ev.tipo;})||TIPOS_EV[0];return(
+            <div key={ev.id} style={{background:'rgba(255,77,46,.08)',border:'1px solid rgba(255,77,46,.25)',borderRadius:10,padding:'9px 12px',marginBottom:6,display:'flex',alignItems:'center',gap:9}}>
+              <span style={{fontSize:15}}>{te.ico}</span>
+              <div style={{flex:1}}><div style={{fontSize:12.5,fontWeight:600,color:'var(--a)'}}>{ev.hora} · {te.lbl} · {ev.leadNom}</div>{ev.descripcion&&<div style={{fontSize:11,color:'var(--mu)',marginTop:1}}>{ev.descripcion}</div>}</div>
+              <span style={{fontSize:10,color:'var(--a)',fontWeight:700}}>VENCIDO</span>
+            </div>);})}
+          {hoyEv.slice(0,3).map(function(ev){var te=TIPOS_EV.find(function(t){return t.v===ev.tipo;})||TIPOS_EV[0];return(
+            <div key={ev.id} style={{background:te.c+'18',border:'1px solid '+te.c+'44',borderRadius:10,padding:'9px 12px',marginBottom:6,display:'flex',alignItems:'center',gap:9}}>
+              <span style={{fontSize:15}}>{te.ico}</span>
+              <div style={{flex:1}}><div style={{fontSize:12.5,fontWeight:700,color:te.c}}>{ev.hora} · {te.lbl}</div><div style={{fontSize:12,marginTop:1}}>{ev.leadNom}{ev.descripcion?' · '+ev.descripcion:''}</div></div>
+              <span style={{fontSize:10,color:te.c,fontWeight:700}}>HOY</span>
+            </div>);})}
+          {proxEv.slice(0,4).map(function(ev){var te=TIPOS_EV.find(function(t){return t.v===ev.tipo;})||TIPOS_EV[0];var dd=dif(h,ev.fecha);return(
+            <div key={ev.id} style={{background:'var(--card)',border:'1px solid var(--ln)',borderRadius:10,padding:'9px 12px',marginBottom:6,display:'flex',alignItems:'center',gap:9}}>
+              <span style={{fontSize:15}}>{te.ico}</span>
+              <div style={{flex:1}}><div style={{fontSize:12.5,fontWeight:600}}>{ev.hora} · {te.lbl} · {ev.leadNom}</div>{ev.descripcion&&<div style={{fontSize:11,color:'var(--mu)',marginTop:1}}>{ev.descripcion}</div>}</div>
+              <span style={{fontSize:10,color:'var(--mu)',fontWeight:700,whiteSpace:'nowrap'}}>En {dd}d</span>
+            </div>);})}
+        </div>);
+      })()}
+    </div>
+    <div style={{fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--mu)',marginBottom:10}}>Proximos a llamar</div>
+    {rec.length===0?<div className="empty"><div className="big">✅</div>Todo al dia!</div>:rec.map(l=>{
+      const d=l.proximo?dif(h,l.proximo):99;const c=d<0?'var(--a)':d===0?'var(--ac)':'var(--mu)';const t=d<0?'Atrasado '+Math.abs(d)+'d':d===0?'HOY':'En '+d+'d';
+      return(<div key={l.id} className="card" style={{borderLeftColor:ESTADOS[l.estado]&&ESTADOS[l.estado].c,marginBottom:7}} onClick={()=>onNav('leads')}>
+        <div className="ctop"><div style={{flex:1}}><div className="nm">{l.nombre}</div><div className="veh">{[l.marca,l.modelo].filter(Boolean).join(' · ')||'Sin vehiculo'}</div></div><div className="sl" style={{color:c,marginTop:4}}>{t}</div></div>
+      </div>);
+    })}
+  </div>);
+}
+
+/* ─── Calendar ──────────────────────────────────────── */
+function ViewCal({leads}){
+  const now=new Date();const[yr,setYr]=useState(now.getFullYear());const[mo,setMo]=useState(now.getMonth());const[sel,setSel]=useState(null);
+  const h=hoy();const dim=new Date(yr,mo+1,0).getDate();const fdow=new Date(yr,mo,1).getDay();
+  const pad=n=>String(n).padStart(2,'0');const ds=d=>yr+'-'+pad(mo+1)+'-'+pad(d);
+  const act=leads.filter(l=>!['close_won','close_lost'].includes(l.estado));
+  const getDots=d=>{const s=ds(d);return{calls:act.filter(l=>l.proximo===s),tasks:leads.flatMap(l=>(l.tareasPend||[]).filter(t=>!t.completada&&t.fecha===s)),eventos:leads.flatMap(l=>(l.eventos||[]).filter(e=>!e.completado&&e.fecha===s).map(e=>({...e,leadNombre:l.nombre})))};};
+  const prev=()=>{if(mo===0){setMo(11);setYr(y=>y-1);}else setMo(m=>m-1);setSel(null);};
+  const next=()=>{if(mo===11){setMo(0);setYr(y=>y+1);}else setMo(m=>m+1);setSel(null);};
+  const cells=[];for(let i=0;i<fdow;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const selData=sel?getDots(sel):{calls:[],tasks:[],eventos:[]};
+  return(<div className="inner">
+    <div className="calhd">
+      <button className="calnav" onClick={prev}>&#8249;</button>
+      <div className="caltit">{MESES[mo]} {yr}</div>
+      <button className="calnav" onClick={next}>&#8250;</button>
+    </div>
+    <div className="calgrid">
+      {DIAS.map(d=><div key={d} className="caldow">{d}</div>)}
+      {cells.map((d,i)=>{
+        if(!d)return<div key={'e'+i} className="calday empty"/>;
+        const s=ds(d);const{calls,tasks,eventos}=getDots(d);const isT=s===h;const isS=sel===d;
+        return(<div key={d} className={'calday'+(isT?' today':'')+(isS?' sel':'')} onClick={()=>setSel(isS?null:d)}>
+          <div className="caldd">{d}</div>
+          <div className="caldots">
+            {calls.slice(0,3).map((_,i)=><div key={'c'+i} className="caldo" style={{background:_.cat==='A'?'var(--a)':_.cat==='B'?'var(--b)':'var(--mu)'}}/>)}
+            {tasks.slice(0,2).map((_,i)=><div key={'t'+i} className="caldo" style={{background:'var(--bl)'}}/>)}
+            {(eventos||[]).slice(0,3).map((ev,ei)=>{const te=TIPOS_EV.find(t=>t.v===ev.tipo)||TIPOS_EV[0];return<div key={'e'+ei} className="caldo" style={{background:te.c}}/>;}) }
+          </div>
+        </div>);
+      })}
+    </div>
+    {sel&&(selData.calls.length>0||selData.tasks.length>0||(selData.eventos||[]).length>0)&&<div style={{marginTop:16}}>
+      <div style={{fontSize:12,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--mu)',marginBottom:9}}>{sel+' '+MESES[mo]}</div>
+      {(selData.eventos||[]).length>0&&(selData.eventos||[]).sort((a,b)=>a.hora.localeCompare(b.hora)).map(ev=>{
+        const te=TIPOS_EV.find(t=>t.v===ev.tipo)||TIPOS_EV[0];
+        return(<div key={ev.id} style={{background:'var(--card)',border:'2px solid '+te.c+'55',borderLeft:'4px solid '+te.c,borderRadius:12,marginBottom:8,padding:'12px 14px',display:'flex',alignItems:'center',gap:11}}>
+          <span style={{fontSize:22}}>{te.ico}</span>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700,fontSize:15,color:te.c}}>{ev.hora} — {te.lbl}</div>
+            <div style={{fontWeight:600,fontSize:13,marginTop:3}}>{ev.leadNombre}</div>
+            {ev.descripcion&&<div style={{color:'var(--mu)',fontSize:12,marginTop:3}}>{ev.descripcion}</div>}
+          </div>
+        </div>);
+      })}
+      {selData.calls.map(l=><div key={l.id} className="card" style={{borderLeftColor:ESTADOS[l.estado]&&ESTADOS[l.estado].c,marginBottom:7}}>
+        <div className="ctop"><div style={{flex:1}}><div className="nm">{l.nombre}</div><div className="veh">{[l.marca,l.modelo].filter(Boolean).join(' ')}</div></div>
+        <span className="badge" style={{background:ESTADOS[l.estado]&&ESTADOS[l.estado].bg,color:ESTADOS[l.estado]&&ESTADOS[l.estado].c}}>{ESTADOS[l.estado]&&ESTADOS[l.estado].lbl}</span></div>
+      </div>)}
+      {selData.tasks.map(t=><div key={t.id} className="taskc"><div className="tck due">!</div><div className="tkb"><div className="tknm">{t.descripcion}</div><div className="tkld">{t.leadNombre}</div></div></div>)}
+    </div>}
+    <div style={{marginTop:16,display:'flex',gap:10,flexWrap:'wrap'}}>
+      {[['var(--a)','Llamada A'],['var(--b)','Llamada B'],['var(--mu)','Llamada C'],['var(--bl)','Tarea'],['#37a7ff','📞 Ev. Llamada'],['#27c281','🤝 Reunion'],['#f5a623','📋 Otro']].map((cl)=>(
+        <div key={cl[1]} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:'var(--mu)'}}><div style={{width:9,height:9,borderRadius:'50%',background:cl[0]}}/>{cl[1]}</div>
+      ))}
+    </div>
+  </div>);
+}
+
+/* ─── Tasks ─────────────────────────────────────────── */
+function ViewTareas({leads,onComplete}){
+  const h=hoy();
+  const all=leads.flatMap(l=>(l.tareasPend||[]).map(t=>({...t,lid:l.id,lnm:l.nombre,ltel:l.telefono})));
+  const pend=all.filter(t=>!t.completada).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const done=all.filter(t=>t.completada).slice(0,8);
+  if(all.length===0)return<div className="inner"><div className="pghd"><h2>Tareas <span>Pendientes</span></h2></div><div className="empty"><div className="big">✅</div>Sin tareas. La IA las crea cuando registras llamadas.</div></div>;
+  return(<div className="inner">
+    <div className="pghd"><h2>Tareas <span>Pendientes</span></h2><span style={{color:'var(--mu)',fontSize:13}}>{pend.length} pendientes</span></div>
+    {pend.map(t=>{const d=dif(h,t.fecha);const ov=d<0;const due=d===0;
+      return(<div key={t.id} className="taskc">
+        <div className={'tck'+(due||ov?' due':'')} onClick={()=>onComplete(t.lid,t.id)}>✓</div>
+        <div className="tkb">
+          <div className="tknm">{t.descripcion}</div>
+          <div className="tkld">{t.lnm}</div>
+          <div className="tkwh" style={{color:ov?'var(--a)':due?'var(--ac)':'var(--mu)'}}>{ov?'Atrasada '+Math.abs(d)+'d':due?'HOY':'En '+d+'d'}</div>
+          {t.pregunta&&<div className="tkq">🤔 {t.pregunta}</div>}
+          {t.ltel&&<a className="btn wa sm" style={{marginTop:7,textDecoration:'none',display:'inline-flex',flex:'0 0 auto',borderRadius:8}} href={waUrl(t.ltel,'')} target="_blank" rel="noreferrer">WhatsApp</a>}
+        </div>
+      </div>);
+    })}
+    {done.length>0&&<div><div style={{fontSize:11,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.5px',margin:'18px 0 8px'}}>Completadas</div>
+    {done.map(t=><div key={t.id} className="taskc" style={{opacity:.5}}><div className="tck done">✓</div><div className="tkb"><div className="tknm done">{t.descripcion}</div><div className="tkld">{t.lnm}</div></div></div>)}</div>}
+  </div>);
+}
+
+/* ─── Reports ───────────────────────────────────────── */
+function ViewRep({leads}){
+  const h=hoy();
+  const meses=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);meses.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}
+  const[sm,setSm]=useState(h.slice(0,7));
+  const bm=m=>leads.filter(l=>l.creadoEn&&l.creadoEn.slice(0,7)===m);
+  const wm=m=>leads.filter(l=>l.estado==='close_won'&&l.cerradoEn&&l.cerradoEn.slice(0,7)===m);
+  const ml=bm(sm);const wl=wm(sm);const ll=leads.filter(l=>l.estado==='close_lost'&&l.cerradoEn&&l.cerradoEn.slice(0,7)===sm);
+  const act=leads.filter(l=>!['close_won','close_lost'].includes(l.estado));
+  const tasa=ml.length?Math.round(wl.length/ml.length*100):0;
+  const orItems=Object.keys(ORIGENES).map(k=>({k:ORIGENES[k].lbl,v:ml.filter(l=>l.origen===k).length})).filter(i=>i.v>0);
+  const mrItems=[...new Set(leads.map(l=>l.marca).filter(Boolean))].map(m=>({k:m,v:leads.filter(l=>l.marca===m).length})).sort((a,b)=>b.v-a.v);
+  const moItems=MOTIVOS.map(m=>({k:m.slice(0,15),v:leads.filter(l=>l.estado==='close_lost'&&(l.motivoPerdida||'').includes(m)).length})).filter(i=>i.v>0);
+  const trItems=meses.map(m=>({k:MESES[parseInt(m.split('-')[1])-1].slice(0,3),v:wm(m).length}));
+  const regItems=[...new Set(leads.map(l=>l.region).filter(Boolean))].map(r=>({k:r,v:leads.filter(l=>l.region===r).length})).sort((a,b)=>b.v-a.v);
+  return(<div className="inner">
+    <div className="pghd"><h2>Reportes <span>&amp;</span> Stats</h2>
+      <select className="msel" value={sm} onChange={e=>setSm(e.target.value)}>{meses.map(m=><option key={m} value={m}>{fmtM(m+'-01')}</option>)}</select>
+        <button style={{background:'rgba(39,194,129,.12)',border:'1px solid rgba(39,194,129,.35)',color:'var(--gn)',padding:'6px 12px',borderRadius:9,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif",textTransform:'uppercase'}} onClick={()=>{
+          const filas=[{"Mes":fmtM(sm+"-01"),"Leads":ml.length,"Won":wl.length,"Lost":ll.length,"Tasa":tasa+"%","Activos":act.length}];
+          Object.keys(ORIGENES).forEach(k=>{filas.push({"Origen":ORIGENES[k].lbl,"Leads mes":ml.filter(l=>l.origen===k).length});});
+          exportarCSV(filas,"reporte-"+sm+".csv");
+        }}>↓ Exportar reporte</button>
+    </div>
+    <div className="stats">
+      <div className="stat red"><div className="num">{ml.length}</div><div className="lbl">Leads mes</div></div>
+      <div className="stat grn"><div className="num">{wl.length}</div><div className="lbl">Won</div></div>
+      <div className="stat blu"><div className="num">{ll.length}</div><div className="lbl">Lost</div></div>
+      <div className="stat org"><div className="num">{tasa}%</div><div className="lbl">Conversion</div></div>
+    </div>
+    <div className="repgrid">
+      <div className="repc"><div className="reptit">Embudo Pipeline</div>
+        {Object.keys(ESTADOS).filter(s=>!['close_won','close_lost'].includes(s)).map(s=>{const n=act.filter(l=>l.estado===s).length;const p=act.length?Math.round(n/act.length*100):0;return<div key={s} className="funrow"><div className="funlbl">{ESTADOS[s].lbl}</div><div className="funnum" style={{color:ESTADOS[s].c}}>{n}</div><span className="funpct">{p}%</span></div>;})}
+      </div>
+      <div className="repc"><div className="reptit">Won ultimos 6 meses</div><BarChart items={trItems} color="var(--gn)"/></div>
+      <div className="repc"><div className="reptit">Por origen ({fmtM(sm+'-01').split(' ')[0]})</div>{orItems.length>0?<BarChart items={orItems} color="var(--bl)"/>:<div style={{fontSize:13,color:'var(--mu)'}}>Sin datos.</div>}</div>
+      <div className="repc"><div className="reptit">Por marca</div><BarChart items={mrItems} color="var(--b)"/></div>
+      <div className="repc"><div className="reptit">Motivos de perdida</div>{moItems.length>0?<BarChart items={moItems} color="var(--a)"/>:<div style={{fontSize:13,color:'var(--mu)'}}>Sin perdidas.</div>}</div>
+      <div className="repc"><div className="reptit">Por region</div>{regItems.length>0?<BarChart items={regItems} color="var(--pu)"/>:<div style={{fontSize:13,color:'var(--mu)'}}>Sin datos de region.</div>}</div>
+      <div className="repc" style={{gridColumn:'1/-1'}}><div className="reptit">Resumen general</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {[['Total leads',leads.length],['Activos',act.length],['Close Won',leads.filter(l=>l.estado==='close_won').length],['Close Lost',leads.filter(l=>l.estado==='close_lost').length],['En SF',act.filter(l=>l.enSF).length],['Faltan SF',act.filter(l=>!l.enSF).length]].map((kv)=>(
+            <div key={kv[0]} style={{background:'var(--c2)',border:'1px solid var(--ln)',borderRadius:9,padding:'10px 12px',textAlign:'center'}}>
+              <div style={{fontSize:22,fontWeight:700,fontFamily:'Barlow Semi Condensed,sans-serif'}}>{kv[1]}</div>
+              <div style={{fontSize:10,color:'var(--mu)',textTransform:'uppercase',letterSpacing:'.4px',marginTop:4}}>{kv[0]}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ─── Ganados ───────────────────────────────────────── */
+function ViewGanados({leads,onPV,onEntregado}){
+  var h=hoy();
+  var gn=leads.filter(function(l){return l.estado==='close_won';});
+  if(gn.length===0){
+    return(<div className="inner">
+      <div className="pghd"><h2>Clientes <span>Ganados</span></h2></div>
+      <div style={{textAlign:'center',color:'var(--mu)',padding:'40px 20px'}}><div style={{fontSize:36,marginBottom:9}}>🏆</div>Aun no tienes ventas cerradas.</div>
+    </div>);
+  }
+  return(
+    <div className="inner">
+      <div className="pghd"><h2>Clientes <span>Ganados</span></h2><span style={{color:'var(--mu)',fontSize:13}}>{gn.length} ventas</span></div>
+      {gn.map(function(l){
+        var ps=l.postVenta;var veh=[l.marca,l.modelo,l.version].filter(Boolean).join(' ');
+        var fups=ps?getFups(ps.fechaEntrega||l.cerradoEn||h,l.nombre,veh):[];
+        var bd=ps&&ps.fechaNac?getBday(ps.fechaNac,l.nombre):null;
+        var all=fups.concat(bd?[bd]:[]);
+        var nxt=all.filter(function(f){return dif(f.fecha,h)>=0;}).sort(function(a,b){return a.fecha.localeCompare(b.fecha);})[0];
+        var nd=nxt?dif(h,nxt.fecha):99;
+        return(
+          <div key={l.id} style={{background:'var(--card)',border:'1px solid var(--ln)',borderLeft:'4px solid var(--gn)',borderRadius:13,padding:15,marginBottom:10}}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10,marginBottom:10}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:700}}>{l.nombre}</div>
+                <div style={{fontSize:12,color:'var(--mu)',marginTop:2}}>{veh||'Sin vehiculo'}</div>
+              </div>
+              <div style={{display:'flex',gap:7,flexWrap:'wrap',flexShrink:0}}>
+                {!ps&&<button style={Object.assign({},S.btn('acc'),{fontSize:11,padding:'6px 10px',borderRadius:8})} onClick={function(){onPV(l);}}>+ Ficha</button>}
+                {ps&&<button style={Object.assign({},S.btn('gh'),{fontSize:11,padding:'6px 10px',borderRadius:8})} onClick={function(){onPV(l);}}>Editar ficha</button>}
+                {!ps||!ps.entregado?(
+                  <button style={{background:'var(--gn)',color:'#06351c',border:'none',borderRadius:8,padding:'6px 10px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif"}} onClick={function(){onEntregado(l.id);}}>📦 Marcar entregado</button>
+                ):(
+                  <span style={{background:'rgba(39,194,129,.15)',border:'1px solid rgba(39,194,129,.4)',color:'var(--gn)',borderRadius:8,padding:'5px 10px',fontSize:11,fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif"}}>✅ Entregado {ps.fechaEntregaReal?fmt(ps.fechaEntregaReal):''}</span>
+                )}
+              </div>
+            </div>
+            {ps&&(
+              <div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8}}>
+                  {ps.tipoVenta&&<span style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'var(--c2)',color:'var(--mu)',border:'1px solid var(--ln)'}}>{ps.tipoVenta==='contado'?'Contado':ps.tipoVenta==='convencional'?'Credito Convencional':'Credito Inteligente'}</span>}
+                  {ps.fechaEntrega&&<span style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'var(--c2)',color:'var(--mu)',border:'1px solid var(--ln)'}}>📅 Entrega: {fmt(ps.fechaEntrega)}</span>}
+                  {ps.precioBase&&<span style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'var(--c2)',color:'var(--mu)',border:'1px solid var(--ln)'}}>💰 {ps.precioBase}</span>}
+                  {ps.seguroAuto&&<span style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'rgba(55,167,255,.15)',color:'var(--bl)',border:'1px solid rgba(55,167,255,.3)'}}>🛡️ Seguro</span>}
+                  {ps.fechaNac&&<span style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'var(--c2)',color:'var(--mu)',border:'1px solid var(--ln)'}}>🎂 {fmt(ps.fechaNac)}</span>}
+                </div>
+                {ps.pagos&&ps.pagos.length>0&&(
+                  <div style={{marginBottom:7}}>
+                    {ps.pagos.map(function(pg){return(
+                      <div key={pg.id} style={{display:'flex',alignItems:'center',gap:7,fontSize:12,padding:'5px 9px',background:'var(--c2)',borderRadius:8,marginBottom:4}}>
+                        <span>{pg.tipo==='transferencia'?'💸':pg.tipo==='credito'?'🏦':'🚗'}</span>
+                        <span style={{fontWeight:600}}>{pg.tipo==='transferencia'?'Transf':pg.tipo==='credito'?pg.banco||'Credito':'VPP'}</span>
+                        <span style={{color:'var(--mu)'}}>{pg.monto||pg.valorVPP}</span>
+                        {pg.tipo==='credito'&&pg.cuotas&&<span style={{color:'var(--mu)'}}>· {pg.cuotas}c x {pg.valorCuota}</span>}
+                        {pg.tipo==='vpp'&&pg.montoPasa&&<span style={{color:'var(--gn)'}}>→ Pasa: {pg.montoPasa}</span>}
+                        {pg.tipo==='vpp'&&pg.vuelto&&pg.vuelto!=='$0'&&<span style={{color:'var(--b)'}}>· Vuelto: {pg.vuelto}</span>}
+                      </div>
+                    );})}
+                  </div>
+                )}
+                {ps.regalos&&ps.regalos.length>0&&(
+                  <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                    {ps.regalos.map(function(rg){return(
+                      <span key={rg.id} style={{fontSize:11,padding:'3px 9px',borderRadius:7,background:'rgba(167,139,250,.1)',color:'var(--pu)',border:'1px solid rgba(167,139,250,.25)'}}>
+                        {rg.tipo==='inscripcion'?'📋':rg.tipo==='combustible'?'⛽':rg.tipo==='mantenciones'?'🔧':'🎁'} {rg.desc||rg.tipo} {rg.monto?'('+rg.monto+')':''}
+                      </span>
+                    );})}
+                  </div>
+                )}
+              </div>
+            )}
+            {nxt&&(
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'7px 10px',borderRadius:8,marginTop:8,fontSize:12,background:nd===0?'rgba(255,77,46,.1)':'rgba(39,194,129,.08)',border:'1px solid '+(nd===0?'rgba(255,77,46,.3)':'rgba(39,194,129,.2)'),color:nd===0?'var(--a)':'var(--gn)'}}>
+                <span>{nxt.tipo==='bday'?'🎂':nxt.tipo==='30d'?'📬':nxt.tipo==='6m'?'🔧':'🎉'}</span>
+                <span style={{flex:1}}>{nxt.tipo==='bday'?'Cumpleanos':nxt.tipo==='30d'?'30 dias':nxt.tipo==='6m'?'6 meses':'1 ano'} — {fmt(nxt.fecha)}</span>
+                <button style={{background:'none',border:'none',color:'inherit',cursor:'pointer',fontSize:11,fontWeight:700,fontFamily:"'Barlow Semi Condensed',sans-serif"}} onClick={function(){copyText(nxt.msg);}}>COPIAR MSG</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+function exportarCSV(datos,nombre){
+  const csv=Papa.unparse(datos,{delimiter:';'});
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=nombre;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+function ViewLeads({leads,cfg,apiKey,onSave,onDel,onSF,onNota,onEvento,onEdit,onTask,onCompleteEv}){
+  const h=hoy();const[fil,setFil]=useState('hoy');const[lostF,setLF]=useState('');
+  const[search,setSrch]=useState('');const[fReg,setFReg]=useState('');const[fCom,setFCom]=useState('');
+  const[selId,setSelId]=useState(null);const[mobD,setMobD]=useState(false);
+  const act=leads.filter(l=>!['close_won','close_lost'].includes(l.estado));
+  const ph=act.filter(l=>l.proximo&&dif(l.proximo,h)>=0);
+  const lista=useMemo(()=>{
+    let r;
+    if(fil==='hoy')r=ph;else if(fil==='todos')r=act;else if(fil==='nuevo')r=act.filter(l=>l.estado==='nuevo');
+    else if(fil==='won')r=leads.filter(l=>l.estado==='close_won');
+    else if(fil==='lost'){r=leads.filter(l=>l.estado==='close_lost');if(lostF)r=r.filter(l=>(l.motivoPerdida||'').includes(lostF));}
+    else r=act.filter(l=>l.estado===fil);
+    if(search.trim()){const q=search.toLowerCase();r=r.filter(l=>(l.nombre||'').toLowerCase().includes(q)||(l.modelo||'').toLowerCase().includes(q)||(l.telefono||'').includes(q)||(l.rut||'').includes(q));}
+    if(fReg)r=r.filter(l=>l.region===fReg);
+    if(fCom)r=r.filter(l=>(l.comuna||'').toLowerCase().includes(fCom.toLowerCase()));
+    const ord={A:0,B:1,C:2};
+    return[...r].sort((a,b)=>{const da=ord[a.cat]!==undefined?ord[a.cat]:3,db=ord[b.cat]!==undefined?ord[b.cat]:3;if(da!==db)return da-db;return(a.proximo||'9999').localeCompare(b.proximo||'9999');});
+  },[leads,fil,lostF,search,fReg,fCom]);
+  const selLead=selId?leads.find(l=>l.id===selId):null;
+  const open=l=>{setSelId(l.id);if(window.innerWidth<1000)setMobD(true);};
+  const regiones=[...new Set(leads.map(l=>l.region).filter(Boolean))];
+  return(<div className="inner">
+    <div className="pghd">
+      <h2>Pipeline <span>Leads</span></h2>
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+        <span style={{color:'var(--mu)',fontSize:13}}>{lista.length} leads</span>
+        <button style={{background:'rgba(39,194,129,.12)',border:'1px solid rgba(39,194,129,.35)',color:'var(--gn)',padding:'6px 12px',borderRadius:9,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:"'Barlow Semi Condensed',sans-serif",textTransform:'uppercase'}} onClick={()=>{
+          const datos=lista.map(l=>{return{Nombre:l.nombre,RUT:l.rut||"",Telefono:l.telefono||"",Correo:l.correo||"",Marca:l.marca||"",Modelo:l.modelo||"",Version:l.version||"",Origen:ORIGENES[l.origen]?ORIGENES[l.origen].lbl:"",Credito:CREDITOS.find(c=>c.v===l.credito)?CREDITOS.find(c=>c.v===l.credito).lbl:"",Estado:ESTADOS[l.estado]?ESTADOS[l.estado].lbl:"",Cat:l.cat||"",Region:l.region||"",Comuna:l.comuna||"",VPP:l.vppTiene?"Si":"No",SF:l.enSF?"Si":"No",FechaCreacion:fmt(l.creadoEn),FechaCierre:fmt(l.cerradoEn)||"",Motivo:l.motivoPerdida||"",NoContesta:l.noContesta||0};});
+          exportarCSV(datos,"leads-"+(new Date().toISOString().slice(0,10))+".csv");
+        }}>↓ Exportar CSV</button>
+      </div>
+    </div>
+    <div className="frow">
+      <input className="sinp" value={search} onChange={e=>setSrch(e.target.value)} placeholder="Buscar nombre, modelo, tel, RUT..."/>
+      {regiones.length>0&&<select className="sel" value={fReg} onChange={e=>setFReg(e.target.value)}>
+        <option value="">Todas las regiones</option>
+        {regiones.map(r=><option key={r} value={r}>{r}</option>)}
+      </select>}
+      {fReg&&<input className="sinp" style={{maxWidth:160}} value={fCom} onChange={e=>setFCom(e.target.value)} placeholder="Filtrar comuna..."/>}
+    </div>
+    <div className="fbar">
+      {[['hoy','Hoy ('+ph.length+')'],['todos','Activos ('+act.length+')'],['nuevo','Nuevos'],['primer_contacto','1er Contacto'],['conversacion','Conversacion'],['negociacion','Negociacion'],['won','Won'],['lost','Lost'],['no_contesta','No Contesta']].map((tl)=>(
+        <div key={tl[0]} className={'ftab'+(fil===tl[0]?' on':'')} onClick={()=>setFil(tl[0])}>{tl[1]}</div>
+      ))}
+    </div>
+    {fil==='lost'&&<div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:10}}>
+      {['',...MOTIVOS].map(m=><div key={m} className={'chip'+(lostF===m?' on':'')} onClick={()=>setLF(m)} style={{fontSize:11,padding:'5px 9px'}}>{m||'Todos'}</div>)}
+    </div>}
+    <div className="ll">
+      <div className="llist">
+        {lista.length===0?<div className="empty"><div className="big">{fil==='hoy'?'✅':'📋'}</div>{fil==='hoy'?'Sin llamadas pendientes!':'Sin leads en esta etapa.'}</div>:lista.map(l=>{
+          const ec=ESTADOS[l.estado]||{};const ci=CREDITOS.find(c=>c.v===l.credito);const oc=ORIGENES[l.origen];
+          const d=l.proximo?dif(h,l.proximo):99;
+          const sl=(()=>{if(['close_won','close_lost'].includes(l.estado))return{t:ec.lbl,c:ec.c};if(d<0)return{t:'Atrasado '+Math.abs(d)+'d',c:'var(--a)'};if(d===0)return{t:'HOY',c:'var(--ac)'};if(d<4)return{t:'En '+d+'d',c:'var(--b)'};return{t:'En '+d+'d',c:'var(--mu)'};})();
+          const catC=l.cat==='A'?'var(--a)':l.cat==='B'?'var(--b)':'var(--mu)';
+          const pt=(l.tareasPend||[]).filter(t=>!t.completada).length;
+          return(<div key={l.id} className={'card'+(selId===l.id?' sel':'')} style={{borderLeftColor:ec.c||'var(--ln)'}} onClick={()=>open(l)}>
+            <div className="ctop">
+              <div style={{flex:1,minWidth:0}}>
+                <div className="nm">{l.nombre}</div>
+                <div className="veh">{[l.marca,l.modelo,l.version].filter(Boolean).join(' · ')||'Sin vehiculo'}</div>
+                <div className="bgs">
+                  <span className="badge" style={{background:ec.bg,color:ec.c}}>{ec.lbl}</span>
+                  {oc&&<span className="badge" style={{background:'rgba(0,0,0,.2)',color:oc.c,border:'1px solid '+oc.c}}>{oc.lbl}</span>}
+                  {ci&&<span className="badge" style={{background:'rgba(0,0,0,.2)',color:ci.c,border:'1px solid '+ci.c}}>{ci.lbl}</span>}
+                  {!['close_won','close_lost'].includes(l.estado)&&<span className={l.enSF?'sfs':'sfn'}>{l.enSF?'SF':'SF ✗'}</span>}
+                  {l.vppTiene&&<span className="badge" style={{background:'rgba(167,139,250,.18)',color:'var(--pu)',border:'1px solid rgba(167,139,250,.3)'}}>VPP</span>}
+                  {(l.noContesta||0)>=3&&<span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:5,background:'rgba(224,107,255,.2)',color:'#e06bff',border:'1px solid rgba(224,107,255,.4)'}}>⚠ NC×{l.noContesta}</span>}
+                  {pt>0&&<span className="badge" style={{background:'rgba(55,167,255,.18)',color:'var(--bl)',border:'1px solid rgba(55,167,255,.3)'}}>{'✅'+pt}</span>}
+                  {l.comuna&&<span className="tagm">📍 {l.comuna}</span>}
+                </div>
+              </div>
+              <div className="rt">
+                {l.cat&&<span className="badge" style={{background:catC,color:l.cat==='B'?'#0d0f14':'#fff'}}>{l.cat}</span>}
+                {sl.t&&<div className="sl" style={{color:sl.c}}>{sl.t}</div>}
+              </div>
+            </div>
+          </div>);
+        })}
+      </div>
+      {selLead&&<DetailPanel lead={selLead} onClose={()=>{setSelId(null);setMobD(false);}} onNota={onNota} onEvento={onEvento} onEdit={onEdit} onDel={id=>{onDel(id);setSelId(null);}} onSF={onSF} onTask={onTask} onCompleteEv={onCompleteEv} isMob={false}/>}
+    </div>
+    {selLead&&mobD&&<DetailPanel lead={selLead} onClose={()=>{setSelId(null);setMobD(false);}} onNota={onNota} onEvento={onEvento} onEdit={onEdit} onDel={id=>{onDel(id);setSelId(null);setMobD(false);}} onSF={onSF} onTask={onTask} onCompleteEv={onCompleteEv} isMob={true}/>}
+  </div>);
+}
+
+/* ─── Main CRM ──────────────────────────────────────── */
+function CRM({db,apiKey,theme,onTheme,onSettings}){
+  const[leads,setL]=useState([]);const[cfg,setCfg]=useState(DEFAULT_CFG);const[carg,setCarg]=useState(true);
+  const[vista,setV]=useState('dashboard');const[toast,setT]=useState('');
+  const[showF,setShowF]=useState(false);const[editL,setEditL]=useState(null);
+  const[notaL,setNotaL]=useState(null);const[evenL,setEvenL]=useState(null);const[evenEdit,setEvenEdit]=useState(null);const[pvL,setPvL]=useState(null);
+  const[sfAlert,setSFA]=useState(null);
+  const[showImp,setShowI]=useState(false);const[csvP,setCsvP]=useState(null);const[csvR,setCsvR]=useState([]);
+  const csvRef=useRef(null);
+  const notif=t=>{setT(t);setTimeout(()=>setT(''),2500);};
+
+  useEffect(()=>{(async()=>{try{const[ls,cd]=await Promise.all([fload(db),cfload(db)]);setL(ls);if(cd)setCfg(cd);}catch(e){notif('Error Firebase');}finally{setCarg(false);}})();},[db]);
+
+  const updC=async nc=>{setCfg(nc);try{await cfsave(db,nc);}catch(e){}};
+
+  const saveLead=async frm=>{
+    const h=hoy();
+    if(editL){const u={...editL,...frm};setL(ls=>ls.map(l=>l.id===editL.id?u:l));try{await fsave(db,u);}catch(e){}notif('Actualizado');}
+    else{const n={id:Date.now().toString(),...frm,estado:'nuevo',notas:[],tareasPend:[],eventos:[],noContesta:0,proximo:h,sugerenciaIA:null,mensajeWAIA:null,creadoEn:h,cerradoEn:null,motivoPerdida:'',postVenta:null};setL(ls=>[n,...ls]);try{await fsave(db,n);}catch(e){}notif('Lead agregado');}
+    setShowF(false);setEditL(null);
+  };
+  const saveNota=async(upd,needSF)=>{setL(ls=>ls.map(l=>l.id===upd.id?upd:l));try{await fsave(db,upd);}catch(e){}setNotaL(null);notif('Guardado');if(needSF)setSFA(upd);if(upd.estado==='close_won'&&!upd.postVenta)setTimeout(()=>setPvL(upd),400);};
+  const savePV=async upd=>{setL(ls=>ls.map(l=>l.id===upd.id?upd:l));try{await fsave(db,upd);}catch(e){}setPvL(null);notif('Ficha guardada');};
+  const saveEvento=async upd=>{setL(ls=>ls.map(l=>l.id===upd.id?upd:l));try{await fbSave(db,upd);}catch(e){}setEvenL(null);setEvenEdit(null);notif(evenEdit?'Evento actualizado ✓':'Evento agendado 📅');};
+  const updateMotivo=async(id,motivo)=>{const u=leads.map(l=>l.id===id?{...l,motivoPerdida:motivo}:l);setL(u);const ld=u.find(l=>l.id===id);try{await fbSave(db,ld);}catch(e){}notif('Motivo actualizado');};
+  const reopenLead=async(id,newEst)=>{const u=leads.map(l=>l.id===id?{...l,estado:newEst,cerradoEn:null,noContesta:0}:l);setL(u);const ld=u.find(l=>l.id===id);try{await fbSave(db,ld);}catch(e){}notif('Lead reabierto en '+ESTADOS[newEst].lbl);};
+  const completeEv=async(lid,eid)=>{const u=leads.map(l=>{if(l.id!==lid)return l;const evs=(l.eventos||[]).map(e=>e.id===eid?{...e,completado:true}:e);return{...l,eventos:evs};});setL(u);const ld=u.find(l=>l.id===lid);try{await fbSave(db,ld);}catch(e){}notif('Evento completado ✓');};
+  const delL=async id=>{setL(ls=>ls.filter(l=>l.id!==id));try{await fdel(db,id);}catch(e){}notif('Eliminado');};
+  const marcarEntregado=async id=>{
+    var u=leads.map(function(l){
+      if(l.id!==id)return l;
+      var ps=Object.assign({},l.postVenta||{},{entregado:true,fechaEntregaReal:hoy()});
+      return Object.assign({},l,{postVenta:ps});
+    });
+    setL(u);
+    var ld=u.find(function(l){return l.id===id;});
+    try{await fsave(db,ld);}catch(e){}
+    notif('Marcado como entregado ✅');
+  };
+  const togSF=async id=>{const u=leads.map(l=>l.id===id?{...l,enSF:!l.enSF}:l);setL(u);const ld=u.find(l=>l.id===id);try{await fsave(db,ld);}catch(e){}notif(ld.enSF?'Cargado en SF':'SF desmarcado');};
+  const compTask=async(lid,tid)=>{const u=leads.map(l=>{if(l.id!==lid)return l;const ts=(l.tareasPend||[]).map(t=>t.id===tid?{...t,completada:true}:t);return{...l,tareasPend:ts};});setL(u);const ld=u.find(l=>l.id===lid);try{await fsave(db,ld);}catch(e){}notif('Tarea completada ✓');};
+
+  const handleCSV=file=>{if(!file)return;Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>{const m=r.data.filter(rw=>Object.values(rw).some(v=>v&&v.trim())).map(mapRow);setCsvR(m);setCsvP({total:m.length,prev:m.slice(0,3)});setShowI(true);},error:()=>notif('Error CSV')});};
+  const importCSV=async modo=>{const lst=modo==='r'?csvR:[...csvR,...leads];setL(lst);try{await fbatch(db,csvR);notif(csvR.length+' leads importados');}catch(e){notif('Error Firebase');}setShowI(false);setCsvR([]);setCsvP(null);};
+
+  const navItems=[{k:'dashboard',ico:'🏠',lbl:'Inicio'},{k:'leads',ico:'👥',lbl:'Leads'},{k:'calendario',ico:'📅',lbl:'Agenda'},{k:'tareas',ico:'✅',lbl:'Tareas'},{k:'reportes',ico:'📊',lbl:'Reportes'},{k:'ganados',ico:'🏆',lbl:'Ganados'}];
+  const tpend=leads.flatMap(l=>(l.tareasPend||[]).filter(t=>!t.completada)).length;
+  const hoyN=leads.filter(l=>!['close_won','close_lost'].includes(l.estado)&&l.proximo&&dif(l.proximo,hoy())>=0).length;
+
+  if(carg)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--mu)'}}>Cargando...</div>;
+
+  return(<div className="layout">
+    <div className="sidebar">
+      <div className="slogo"><span style={{fontSize:22}}>🚗</span><div className="slt">Portillo <span>Sur</span></div></div>
+      <div className="sdiv"/>
+      <nav className="snav">
+        {navItems.map(n=><div key={n.k} className={'sni'+(vista===n.k?' on':'')} onClick={()=>setV(n.k)}>
+          <span className="sni-ico">{n.ico}</span><span className="snl">{n.lbl}</span>
+          {n.k==='leads'&&hoyN>0&&<span className="snb">{hoyN}</span>}
+          {n.k==='tareas'&&tpend>0&&<span className="snb">{tpend}</span>}
+        </div>)}
+      </nav>
+      <div className="sbot">
+        <div className="sdiv"/>
+        <button className="impbtn" style={{width:'100%',marginBottom:7}} onClick={()=>csvRef.current&&csvRef.current.click()}>↑ Importar CSV</button>
+        <input ref={csvRef} type="file" accept=".csv" style={{display:'none'}} onChange={e=>{handleCSV(e.target.files[0]);e.target.value='';}}/>
+        <div style={{display:'flex',gap:6}}>
+          <button className="icobtn" style={{flex:1}} onClick={onTheme}>{theme==='dark'?'☀️':'🌙'}</button>
+          <button className="icobtn" style={{flex:1}} onClick={onSettings}>⚙️</button>
+        </div>
+      </div>
+    </div>
+    <div className="main">
+      {vista==='dashboard'&&<ViewDash leads={leads} onNav={setV}/>}
+      {vista==='leads'&&<ViewLeads leads={leads} cfg={cfg} apiKey={apiKey} onSave={saveLead} onDel={delL} onSF={togSF} onNota={l=>setNotaL(l)} onEvento={(l,ev)=>{setEvenL(l);setEvenEdit(ev||null);}} onEdit={l=>{setEditL(l);setShowF(true);}} onTask={compTask} onCompleteEv={completeEv}/>}
+      {vista==='calendario'&&<ViewCal leads={leads}/>}
+      {vista==='tareas'&&<ViewTareas leads={leads} onComplete={compTask}/>}
+      {vista==='reportes'&&<ViewRep leads={leads}/>}
+      {vista==='ganados'&&<ViewGanados leads={leads} onPV={function(l){setPvL(l);}} onEntregado={marcarEntregado}/>}
+    </div>
+    <button className="fab" onClick={()=>{setEditL(null);setShowF(true);}}>+</button>
+    <div className="bnav">
+      {navItems.slice(0,5).map(n=><div key={n.k} className={'bni'+(vista===n.k?' on':'')} onClick={()=>setV(n.k)}>
+        <span className="bni-ico">{n.ico}</span><span>{n.lbl}</span>
+        {n.k==='tareas'&&tpend>0&&<span style={{position:'absolute',top:5,right:'calc(50% - 18px)',background:'var(--ac)',color:'#fff',fontSize:9,padding:'1px 4px',borderRadius:7}}>{tpend}</span>}
+      </div>)}
+    </div>
+    {showF&&<ModalLead lead={editL} cfg={cfg} leads={leads} onSave={saveLead} onClose={()=>{setShowF(false);setEditL(null);}}/>}
+    {notaL&&<ModalNota lead={notaL} apiKey={apiKey} onSave={saveNota} onClose={()=>setNotaL(null)}/>}
+      {evenL&&<ModalEvento lead={evenL} evento={evenEdit} onSave={saveEvento} onClose={()=>{setEvenL(null);setEvenEdit(null);}}/> }
+    {pvL&&<ModalPV lead={pvL} onSave={savePV} onClose={()=>setPvL(null)}/>}
+    {sfAlert&&<ModalSF lead={sfAlert} onOk={()=>{setSFA(null);notif('SF actualizado ✓');}} onClose={()=>setSFA(null)}/>}
+    {showImp&&csvP&&<div className="ov" onClick={e=>{if(e.target.className==='ov'){setShowI(false);setCsvP(null);setCsvR([]);}}}>
+      <div className="sheet">
+        <h2>Importar CSV</h2>
+        <div style={{background:'rgba(55,167,255,.09)',border:'1px solid rgba(55,167,255,.28)',borderRadius:11,padding:13,marginBottom:12}}>
+          <div style={{fontSize:13,color:'var(--bl)',fontWeight:700,marginBottom:3}}>{csvP.total} leads encontrados</div>
+          <div style={{fontSize:11.5,color:'var(--mu)'}}>Marca, credito, etapa, region y comuna detectados automaticamente</div>
+        </div>
+        <div className="sect">Vista previa</div>
+        {csvP.prev.map((l,i)=><div key={i} style={{background:'var(--c2)',border:'1px solid var(--ln)',borderRadius:9,padding:'9px 11px',marginBottom:6}}>
+          <div style={{fontWeight:700,fontSize:13.5}}>{l.nombre||'Sin nombre'}</div>
+          <div style={{color:'var(--mu)',fontSize:12,marginTop:2}}>{l.modelo}{l.marca?' · '+l.marca:''}{l.region?' · '+l.region:''}</div>
+        </div>)}
+        {leads.length>0&&<div style={{background:'rgba(245,166,35,.09)',border:'1px solid rgba(245,166,35,.28)',borderRadius:9,padding:11,marginBottom:9,fontSize:12.5,color:'var(--b)'}}>Ya tienes {leads.length} leads. Agregar o reemplazar?</div>}
+        <div className="acts" style={{marginBottom:7}}>
+          <button className="btn acc" onClick={()=>importCSV('a')}>+ Agregar</button>
+          {leads.length>0&&<button className="btn gh" onClick={()=>{if(window.confirm('Reemplazar todos?'))importCSV('r');}}>Reemplazar</button>}
+        </div>
+        <button className="cancel" onClick={()=>{setShowI(false);setCsvP(null);setCsvR([]);}}>Cancelar</button>
+      </div>
+    </div>}
+    {toast&&<div className="toast">{toast}</div>}
+  </div>);
+}
+
+/* ─── App root ──────────────────────────────────────── */
+function App(){
+  const[theme,setTh]=useState(()=>localStorage.getItem('crm-theme')||'dark');
+  const[fbC,setFbC]=useState(()=>{try{return JSON.parse(localStorage.getItem('crm-fb'));}catch{return null;}});
+  const[ak,setAk]=useState(()=>localStorage.getItem('crm-ak')||'');
+  const[db,setDb]=useState(null);const[showCfg,setSC]=useState(false);
+  useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('crm-theme',theme);},[theme]);
+  useEffect(()=>{if(fbC){try{if(!firebase.apps.length)firebase.initializeApp(fbC);setDb(firebase.firestore());}catch(e){setFbC(null);}}},[fbC]);
+  const handleSave=(c,k)=>{setFbC(c);setAk(k);setSC(false);};
+  if(!fbC||!db)return<SetupScreen onSave={handleSave} saved={fbC}/>;
+  return(<div>
+    {showCfg&&<div className="ov" style={{zIndex:99}} onClick={e=>{if(e.target.className.includes('ov'))setSC(false);}}><div className="sheet"><SetupScreen onSave={handleSave} saved={fbC}/></div></div>}
+    <CRM db={db} apiKey={ak} theme={theme} onTheme={()=>setTh(t=>t==='dark'?'light':'dark')} onSettings={()=>setSC(true)}/>
+  </div>);
+}
+
+try{
+  document.getElementById('loading').style.display='none';
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App,null));
+}catch(e){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('err').style.display='block';
+  document.getElementById('errmsg').textContent=e.stack||e.message||String(e);
+}
+</script>
+</body>
+</html>
