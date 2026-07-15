@@ -1264,7 +1264,7 @@ function ViewLeads({leads,cfg,apiKey,onSave,onDel,onSF,onNota,onEvento,onEdit,on
     else if(fil==='won')r=leads.filter(l=>l.estado==='close_won');
     else if(fil==='lost'){r=leads.filter(l=>l.estado==='close_lost');if(lostF)r=r.filter(l=>(l.motivoPerdida||'').includes(lostF));}
     else r=act.filter(l=>l.estado===fil);
-    if(search.trim()){const q=search.toLowerCase();r=r.filter(l=>(l.nombre||'').toLowerCase().includes(q)||(l.modelo||'').toLowerCase().includes(q)||(l.telefono||'').includes(q)||(l.rut||'').includes(q));}
+    r = window.Filtros.filtrarPorTexto(r, search);
     if(fReg)r=r.filter(l=>l.region===fReg);
     if(fCom)r=r.filter(l=>(l.comuna||'').toLowerCase().includes(fCom.toLowerCase()));
     const ord={A:0,B:1,C:2};
